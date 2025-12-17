@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/orderService';
+import { useEffect } from 'react';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -21,15 +22,17 @@ export default function CheckoutPage() {
     paymentMethod: 'COD'
   });
 
+useEffect(() => {
   if (!isAuthenticated()) {
-    router.push('/auth/login');
-    return null;
+    router.replace('/auth/login');
+    return;
   }
 
   if (!cart || cart.items.length === 0) {
-    router.push('/cart');
-    return null;
+    router.replace('/cart');
   }
+}, [isAuthenticated, cart, router]);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

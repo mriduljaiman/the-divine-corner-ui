@@ -3,16 +3,21 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 export default function CartPage() {
   const { cart, loading, updateCartItem, removeFromCart } = useCart();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
+  
+
+useEffect(() => {
   if (!isAuthenticated()) {
-    router.push('/auth/login');
-    return null;
+    router.replace('/auth/login');
   }
+}, [isAuthenticated, router]);
+
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
