@@ -1,9 +1,9 @@
 // ============ pages/products/[id].js ============
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { productService } from '../../services/productService';
-import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
+import { productService } from '../../../services/productService';
+import { useCart } from '../../../context/CartContext';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProductDetail() {
   const router = useRouter();
