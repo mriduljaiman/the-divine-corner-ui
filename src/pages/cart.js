@@ -1,23 +1,25 @@
-// ============ pages/cart.js ============
+import { useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { useEffect } from 'react';
 
 export default function CartPage() {
   const { cart, loading, updateCartItem, removeFromCart } = useCart();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  
+  // client-side auth redirect
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.replace('/auth/login');
+    }
+  }, [isAuthenticated, router]);
 
-useEffect(() => {
-  if (!isAuthenticated()) {
-    router.replace('/auth/login');
+  // SSR / build safety
+  if (loading || !cart) {
+    return <div className="loading">Loading cart...</div>;
   }
-}, [isAuthenticated, router]);
-
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -36,14 +38,12 @@ useEffect(() => {
     }
   };
 
-  if (loading) return <div className="loading">Loading cart...</div>;
-
   return (
     <div className="cart-page">
       <div className="container">
         <h1>Shopping Cart</h1>
 
-        {!cart || cart.items.length === 0 ? (
+        {cart.items.length === 0 ? (
           <div className="empty-cart">
             <p>Your cart is empty</p>
             <Link href="/products" className="btn btn-primary">
@@ -71,14 +71,14 @@ useEffect(() => {
                   </div>
 
                   <div className="item-quantity">
-                    <button 
+                    <button
                       onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                       disabled={item.quantity <= 1}
                     >
                       -
                     </button>
                     <span>{item.quantity}</span>
-                    <button 
+                    <button
                       onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                       disabled={item.quantity >= item.product.stockQuantity}
                     >
@@ -90,7 +90,7 @@ useEffect(() => {
                     ${item.subtotal.toFixed(2)}
                   </div>
 
-                  <button 
+                  <button
                     className="btn-remove"
                     onClick={() => handleRemove(item.id)}
                   >

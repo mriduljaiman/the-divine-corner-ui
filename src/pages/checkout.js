@@ -1,38 +1,58 @@
-// ============ pages/checkout.js ============
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/orderService';
-import { useEffect } from 'react';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    shippingAddress: user?.address || '',
-    shippingCity: user?.city || '',
-    shippingState: user?.state || '',
-    shippingZipCode: user?.zipCode || '',
-    shippingCountry: user?.country || '',
-    customerPhone: user?.phone || '',
-    customerEmail: user?.email || '',
+    shippingAddress: '',
+    shippingCity: '',
+    shippingState: '',
+    shippingZipCode: '',
+    shippingCountry: '',
+    customerPhone: '',
+    customerEmail: '',
     paymentMethod: 'COD'
   });
 
-useEffect(() => {
-  if (!isAuthenticated()) {
-    router.replace('/auth/login');
-    return;
-  }
+  // hydrate form from user (client-side safe)
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        shippingAddress: user.address || '',
+        shippingCity: user.city || '',
+        shippingState: user.state || '',
+        shippingZipCode: user.zipCode || '',
+        shippingCountry: user.country || '',
+        customerPhone: user.phone || '',
+        customerEmail: user.email || ''
+      }));
+    }
+  }, [user]);
 
-  if (!cart || cart.items.length === 0) {
-    router.replace('/cart');
-  }
-}, [isAuthenticated, cart, router]);
+  // client-side redirects only
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.replace('/auth/login');
+      return;
+    }
 
+    if (!cart || cart.items.length === 0) {
+      router.replace('/cart');
+    }
+  }, [isAuthenticated, cart, router]);
+
+  // SSR / build safety guard
+  if (!cart || !cart.items) {
+    return <div className="loading">Loading checkout...</div>;
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -61,7 +81,7 @@ useEffect(() => {
         <form onSubmit={handleSubmit} className="checkout-form">
           <div className="checkout-section">
             <h2>Shipping Information</h2>
-            
+
             <div className="form-group">
               <label>Address</label>
               <input
@@ -172,8 +192,8 @@ useEffect(() => {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary btn-large btn-block"
             disabled={loading}
           >
