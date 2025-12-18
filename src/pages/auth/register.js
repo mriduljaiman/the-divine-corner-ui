@@ -1,4 +1,3 @@
-// ============ pages/auth/register.js ============
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';

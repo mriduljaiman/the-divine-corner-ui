@@ -44,9 +44,9 @@ const ProductCard = ({ product }) => {
         <div className="product-info">
           <h3 className="product-name">{product.name}</h3>
           <div className="product-price">
-            <span className="current-price">${displayPrice}</span>
+            <span className="current-price">₹{displayPrice}</span>
             {hasDiscount && (
-              <span className="original-price">${product.price}</span>
+              <span className="original-price">₹{product.price}</span>
             )}
           </div>
           {product.stockQuantity === 0 && (

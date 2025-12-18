@@ -1,6 +1,6 @@
-// ============ pages/index.js ============
 import { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
+import HeroBanner from '../components/HeroBanner';
 import Link from 'next/link';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
@@ -31,17 +31,7 @@ export default function Home() {
 
   return (
     <div className="home-page">
-      <section className="hero">
-        <div className="container">
-          <div className="hero-content">
-            <h1>Welcome to The Divine Corner</h1>
-            <p>Discover amazing products at unbeatable prices</p>
-            <Link href="/products" className="btn btn-primary btn-large">
-              Shop Now
-            </Link>
-          </div>
-        </div>
-      </section>
+      <HeroBanner />
 
       <section className="categories-section">
         <div className="container">
