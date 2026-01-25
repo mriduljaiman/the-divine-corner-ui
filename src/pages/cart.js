@@ -66,7 +66,7 @@ export default function CartPage() {
                   <div className="item-details">
                     <h3>{item.product.name}</h3>
                     <p className="item-price">
-                      ${item.product.discountPrice || item.product.price}
+                      ₹{item.product.discountPrice || item.product.price}
                     </p>
                   </div>
 
@@ -87,7 +87,7 @@ export default function CartPage() {
                   </div>
 
                   <div className="item-subtotal">
-                    ${item.subtotal.toFixed(2)}
+                    ₹{item.subtotal.toFixed(2)}
                   </div>
 
                   <button
@@ -104,7 +104,7 @@ export default function CartPage() {
               <h3>Order Summary</h3>
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>${cart.totalAmount.toFixed(2)}</span>
+                <span>₹{cart.totalAmount.toFixed(2)}</span>
               </div>
               <div className="summary-row">
                 <span>Shipping</span>
@@ -112,7 +112,7 @@ export default function CartPage() {
               </div>
               <div className="summary-row total">
                 <span>Total</span>
-                <span>${cart.totalAmount.toFixed(2)}</span>
+                <span>₹{cart.totalAmount.toFixed(2)}</span>
               </div>
               <Link href="/checkout" className="btn btn-primary btn-block">
                 Proceed to Checkout

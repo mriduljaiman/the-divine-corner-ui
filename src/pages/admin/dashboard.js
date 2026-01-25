@@ -42,12 +42,12 @@ export default function AdminDashboard() {
         <div className="dashboard-stats">
           <div className="stat-card">
             <h3>Total Revenue</h3>
-            <p className="stat-value">${dashboard?.totalRevenue?.toFixed(2) || '0.00'}</p>
+            <p className="stat-value">₹{dashboard?.totalRevenue?.toFixed(2) || '0.00'}</p>
           </div>
 
           <div className="stat-card">
             <h3>Monthly Revenue</h3>
-            <p className="stat-value">${dashboard?.monthlyRevenue?.toFixed(2) || '0.00'}</p>
+            <p className="stat-value">₹{dashboard?.monthlyRevenue?.toFixed(2) || '0.00'}</p>
           </div>
 
           <div className="stat-card">
@@ -91,11 +91,20 @@ export default function AdminDashboard() {
               <Link href="/admin/categories/new" className="btn btn-primary">
                 Add New Category
               </Link>
+              <Link href="/admin/stock-in" className="btn btn-primary">
+                Record Stock IN
+              </Link>
               <Link href="/admin/orders" className="btn btn-secondary">
                 View All Orders
               </Link>
               <Link href="/admin/products" className="btn btn-secondary">
                 Manage Products
+              </Link>
+              <Link href="/admin/categories" className="btn btn-secondary">
+                Manage Categories
+              </Link>
+              <Link href="/admin/stock-in/history" className="btn btn-secondary">
+                Stock IN History
               </Link>
             </div>
           </section>
@@ -115,7 +124,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   <div>
-                    <strong>${order.totalAmount.toFixed(2)}</strong>
+                    <strong>₹{order.totalAmount.toFixed(2)}</strong>
                   </div>
                   <Link href={`/admin/orders/${order.id}`} className="btn btn-sm">
                     View

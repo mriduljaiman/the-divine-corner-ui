@@ -85,14 +85,14 @@ export default function OrdersPage() {
                           <p>{item.productName}</p>
                           <span>Qty: {item.quantity}</span>
                         </div>
-                        <span className="item-price">${item.subtotal.toFixed(2)}</span>
+                        <span className="item-price">₹{item.subtotal.toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="order-footer">
                     <div className="order-total">
-                      Total: ${order.totalAmount.toFixed(2)}
+                      Total: ₹{order.totalAmount.toFixed(2)}
                     </div>
                     <Link href={`/orders/${order.id}`} className="btn btn-secondary">
                       View Details

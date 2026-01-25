@@ -183,12 +183,12 @@ export default function CheckoutPage() {
             {cart.items.map(item => (
               <div key={item.id} className="summary-item">
                 <span>{item.product.name} x {item.quantity}</span>
-                <span>${item.subtotal.toFixed(2)}</span>
+                <span>₹{item.subtotal.toFixed(2)}</span>
               </div>
             ))}
             <div className="summary-total">
               <strong>Total</strong>
-              <strong>${cart.totalAmount.toFixed(2)}</strong>
+              <strong>₹{cart.totalAmount.toFixed(2)}</strong>
             </div>
           </div>
 
