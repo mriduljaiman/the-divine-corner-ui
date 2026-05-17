@@ -5,29 +5,29 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 const banners = [
   {
     id: 1,
-    title: 'Welcome to The Divine Corner',
-    subtitle: 'Discover amazing products at unbeatable prices',
+    title: 'The Divine Corner',
+    subtitle: 'Handpicked Gifts for Every Occasion — Delivered with Love from Jaipur',
     buttonText: 'Shop Now',
     buttonLink: '/products',
     bgColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200'
+    image: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=1200'
   },
   {
     id: 2,
     title: 'New Arrivals',
-    subtitle: 'Check out our latest collection of premium products',
+    subtitle: 'Discover Unique Gifts from Our Latest Collection',
     buttonText: 'Explore',
     buttonLink: '/products',
     bgColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200'
+    image: 'https://images.unsplash.com/photo-1549465220-1a8b9238bd345?w=1200'
   },
   {
     id: 3,
-    title: 'Special Offers',
-    subtitle: 'Up to 50% off on selected items',
-    buttonText: 'View Deals',
+    title: 'Gifts for Every Occasion',
+    subtitle: 'Birthday, Anniversary, Diwali — Find the Perfect Gift',
+    buttonText: 'View Collection',
     buttonLink: '/products',
-    bgColor: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    bgColor: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
     image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200'
   }
 ];

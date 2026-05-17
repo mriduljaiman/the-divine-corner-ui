@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../context/AuthContext';
 import styles from '../../../styles/Admin.module.css';
+import api from '../../../services/api';
 
 export default function StockInHistory() {
   const router = useRouter();
@@ -38,14 +39,8 @@ export default function StockInHistory() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/products/all', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.content || []);
-      }
+      const response = await api.get('/products/all');
+      setProducts(response.data.content || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     }
@@ -70,19 +65,14 @@ export default function StockInHistory() {
         params.append('endDate', new Date(filters.endDate).toISOString());
       }
 
-      const response = await fetch(`http://localhost:8080/api/stock-in/history?${params}`, {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setHistory(data.content || []);
-        setPagination(prev => ({
-          ...prev,
-          totalPages: data.totalPages || 0,
-          totalElements: data.totalElements || 0
-        }));
-      }
+      const response = await api.get(`/stock-in/history?${params}`);
+      const data = response.data;
+      setHistory(data.content || []);
+      setPagination(prev => ({
+        ...prev,
+        totalPages: data.totalPages || 0,
+        totalElements: data.totalElements || 0
+      }));
     } catch (error) {
       console.error('Error fetching history:', error);
     } finally {

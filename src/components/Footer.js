@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   FiMail,
-  FiPhone,
   FiMapPin,
   FiSend,
 } from 'react-icons/fi';
@@ -77,17 +76,13 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-title">Contact Us</h4>
             <div className="footer-contact">
-              <a href="mailto:support@divinecorner.com" className="contact-item">
+              <a href="mailto:thedivinecorner.seva@gmail.com" className="contact-item">
                 <FiMail />
-                <span>support@divinecorner.com</span>
-              </a>
-              <a href="tel:+1234567890" className="contact-item">
-                <FiPhone />
-                <span>+1 (234) 567-890</span>
+                <span>thedivinecorner.seva@gmail.com</span>
               </a>
               <div className="contact-item">
                 <FiMapPin />
-                <span>123 Divine Street, City, Country</span>
+                <span>Kanak Vrindavan, Jaipur</span>
               </div>
             </div>
 

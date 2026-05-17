@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../context/AuthContext';
 import styles from '../../../styles/Admin.module.css';
+import api from '../../../services/api';
 
 export default function StockIn() {
   const router = useRouter();
@@ -49,14 +50,8 @@ export default function StockIn() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/products/all', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.content || []);
-      }
+      const response = await api.get('/products/all');
+      setProducts(response.data.content || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     }
@@ -64,14 +59,8 @@ export default function StockIn() {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/suppliers', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSuppliers(data || []);
-      }
+      const response = await api.get('/suppliers');
+      setSuppliers(response.data || []);
     } catch (error) {
       console.error('Error fetching suppliers:', error);
       // Set empty array if suppliers endpoint doesn't exist yet
@@ -116,42 +105,27 @@ export default function StockIn() {
         remarks: formData.remarks || null
       };
 
-      const response = await fetch('http://localhost:8080/api/stock-in', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload)
+      const response = await api.post('/stock-in', payload);
+      const data = response.data;
+      setSuccess(`Stock IN recorded successfully! New balance: ${data.balanceAfter} units`);
+
+      setFormData({
+        productId: '',
+        quantity: '',
+        movementDate: new Date().toISOString().slice(0, 16),
+        supplierId: '',
+        invoiceNumber: '',
+        unitCost: '',
+        remarks: ''
       });
+      setSearchTerm('');
 
-      if (response.ok) {
-        const data = await response.json();
-        setSuccess(`Stock IN recorded successfully! New balance: ${data.balanceAfter} units`);
-
-        // Reset form
-        setFormData({
-          productId: '',
-          quantity: '',
-          movementDate: new Date().toISOString().slice(0, 16),
-          supplierId: '',
-          invoiceNumber: '',
-          unitCost: '',
-          remarks: ''
-        });
-        setSearchTerm('');
-
-        // Redirect to history after 2 seconds
-        setTimeout(() => {
-          router.push('/admin/stock-in/history');
-        }, 2000);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to record stock IN');
-      }
+      setTimeout(() => {
+        router.push('/admin/stock-in/history');
+      }, 2000);
     } catch (error) {
-      console.error('Error recording stock IN:', error);
-      setError('An error occurred while recording stock IN');
+      const msg = error.response?.data?.message || 'An error occurred while recording stock IN';
+      setError(msg);
     } finally {
       setLoading(false);
     }

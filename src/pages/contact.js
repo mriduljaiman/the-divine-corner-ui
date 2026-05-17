@@ -93,17 +93,12 @@ export default function ContactPage() {
             <div className="contact-info">
               <div className="info-item">
                 <h3>📍 Address</h3>
-                <p>123 Main Street<br />New York, NY 10001</p>
-              </div>
-
-              <div className="info-item">
-                <h3>📞 Phone</h3>
-                <p>+1 (555) 123-4567</p>
+                <p>Kanak Vrindavan<br />Jaipur, Rajasthan</p>
               </div>
 
               <div className="info-item">
                 <h3>📧 Email</h3>
-                <p>support@divinecorner.com</p>
+                <p>thedivinecorner.seva@gmail.com</p>
               </div>
 
               <div className="info-item">

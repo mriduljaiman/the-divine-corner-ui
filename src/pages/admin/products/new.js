@@ -48,12 +48,25 @@ export default function NewProduct() {
     }
   };
 
+  const generateSku = async (categoryId) => {
+    const cat = categories.find(c => String(c.id) === String(categoryId));
+    if (!cat) return;
+    const prefix = cat.name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+    try {
+      const res = await productService.searchProducts({ categoryId, size: 1, page: 0 });
+      const count = res.data.totalElements || 0;
+      const num = String(count + 1).padStart(3, '0');
+      setFormData(prev => ({ ...prev, sku: `${prefix}${num}` }));
+    } catch {
+      setFormData(prev => ({ ...prev, sku: `${prefix}001` }));
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+    const updated = { ...formData, [name]: type === 'checkbox' ? checked : value };
+    setFormData(updated);
+    if (name === 'categoryId' && value) generateSku(value);
   };
 
   const handleImageUploadComplete = (results) => {
@@ -161,13 +174,13 @@ export default function NewProduct() {
 
             <div className="form-row">
               <div className="form-group">
-                <label>SKU</label>
+                <label>SKU <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 400 }}>(auto-generated on category select)</span></label>
                 <input
                   type="text"
                   name="sku"
                   value={formData.sku}
                   onChange={handleChange}
-                  placeholder="e.g., PROD-001"
+                  placeholder="Select a category to auto-generate"
                 />
               </div>
 
