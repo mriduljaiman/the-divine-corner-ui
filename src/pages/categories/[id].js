@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from '../../../context/AuthContext';
-import { categoryService } from '../../../services/categoryService';
+import { useAuth } from '../../context/AuthContext';
+import { categoryService } from '../../services/categoryService';
 
 export default function EditCategory() {
   const router = useRouter();

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { useAuth } from '../../../context/AuthContext';
-import { categoryService } from '../../../services/categoryService';
+import { useAuth } from '../../context/AuthContext';
+import { categoryService } from '../../services/categoryService';
 
 export default function AdminCategories() {
   const router = useRouter();
