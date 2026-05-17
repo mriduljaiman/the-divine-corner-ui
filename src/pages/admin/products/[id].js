@@ -1,159 +1,288 @@
-// ============ pages/products/[id].js ============
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { productService } from '../../../services/productService';
-import { useCart } from '../../../context/CartContext';
 import { useAuth } from '../../../context/AuthContext';
+import { productService } from '../../../services/productService';
+import { categoryService } from '../../../services/categoryService';
+import ImageUpload from '../../../components/ImageUpload';
+import { showToast } from '../../../utils/toast';
+import { FiSave, FiX, FiStar, FiPlus, FiTrash2 } from 'react-icons/fi';
 
-export default function ProductDetail() {
+export default function EditProduct() {
   const router = useRouter();
   const { id } = router.query;
-  const { addToCart } = useCart();
-  const { isAuthenticated } = useAuth();
-  const [product, setProduct] = useState(null);
+  const { isAdmin, loading: authLoading } = useAuth();
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [quantity, setQuantity] = useState(1);
-  const [adding, setAdding] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    purchasingPrice: '',
+    price: '',
+    discountPrice: '',
+    stockQuantity: '',
+    categoryId: '',
+    sku: '',
+    brand: '',
+    featured: false,
+    images: []
+  });
 
   useEffect(() => {
-    if (id) {
-      fetchProduct();
+    if (!authLoading && !isAdmin()) {
+      router.push('/');
+      return;
     }
-  }, [id]);
+    if (isAdmin() && id) {
+      Promise.all([fetchProduct(), fetchCategories()]);
+    }
+  }, [authLoading, isAdmin, id]);
 
   const fetchProduct = async () => {
     try {
       const response = await productService.getProductById(id);
-      setProduct(response.data);
-    } catch (error) {
-      console.error('Error fetching product:', error);
+      const p = response.data;
+      setFormData({
+        name: p.name || '',
+        description: p.description || '',
+        purchasingPrice: p.purchasingPrice != null ? p.purchasingPrice : '',
+        price: p.price != null ? p.price : '',
+        discountPrice: p.discountPrice != null ? p.discountPrice : '',
+        stockQuantity: p.stockQuantity != null ? p.stockQuantity : '',
+        categoryId: p.category?.id || '',
+        sku: p.sku || '',
+        brand: p.brand || '',
+        featured: p.featured || false,
+        images: p.images || []
+      });
+    } catch (err) {
+      showToast.error('Failed to load product');
+      router.push('/admin/products');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddToCart = async () => {
-    if (!isAuthenticated()) {
-      router.push('/auth/login');
-      return;
-    }
-
+  const fetchCategories = async () => {
     try {
-      setAdding(true);
-      await addToCart(product.id, quantity);
-      alert('Product added to cart!');
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to add to cart');
-    } finally {
-      setAdding(false);
+      const response = await categoryService.getAllActiveCategories();
+      setCategories(response.data);
+    } catch (err) {
+      showToast.error('Failed to load categories');
     }
   };
 
-  if (loading) return <div className="loading">Loading product...</div>;
-  if (!product) return <div className="container"><h1>Product not found</h1></div>;
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+  };
 
-  const displayPrice = product.discountPrice || product.price;
-  const hasDiscount = product.discountPrice && product.discountPrice < product.price;
-  const discount = hasDiscount ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0;
+  const handleImageUploadComplete = (results) => {
+    const newUrls = results.map(r => r.url);
+    setFormData({ ...formData, images: [...formData.images, ...newUrls] });
+    showToast.success(`${results.length} image(s) uploaded`);
+  };
+
+  const handleRemoveImage = (index) => {
+    setFormData({ ...formData, images: formData.images.filter((_, i) => i !== index) });
+  };
+
+  const handleAddImageUrl = () => {
+    const url = prompt('Enter image URL:');
+    if (url && url.trim()) {
+      setFormData({ ...formData, images: [...formData.images, url.trim()] });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      const productData = {
+        ...formData,
+        purchasingPrice: formData.purchasingPrice !== '' ? parseFloat(formData.purchasingPrice) : null,
+        price: parseFloat(formData.price),
+        discountPrice: formData.discountPrice !== '' ? parseFloat(formData.discountPrice) : null,
+        stockQuantity: parseInt(formData.stockQuantity),
+      };
+      await productService.updateProduct(id, productData);
+      showToast.success('Product updated successfully!');
+      router.push('/admin/products');
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to update product';
+      setError(message);
+      showToast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const marginInfo = (() => {
+    const cost = parseFloat(formData.purchasingPrice);
+    const sell = parseFloat(formData.price);
+    if (!cost || !sell) return null;
+    const margin = sell - cost;
+    const pct = sell > 0 ? ((margin / sell) * 100).toFixed(1) : 0;
+    const color = margin < 0 ? 'var(--danger)' : margin === 0 ? 'var(--warning)' : 'var(--success)';
+    return { margin, pct, color };
+  })();
+
+  if (authLoading || loading) {
+    return (
+      <div className="admin-page">
+        <div className="container">
+          <div style={{ textAlign: 'center', padding: '3rem' }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="product-detail-page">
+    <div className="admin-page">
       <div className="container">
-        <div className="product-detail-layout">
-          <div className="product-images-section">
-            <div className="main-image">
-              {product.images && product.images.length > 0 ? (
-                <img src={product.images[selectedImage]} alt={product.name} />
-              ) : (
-                <div className="no-image-large">No Image Available</div>
-              )}
+        <div className="admin-header">
+          <h1>Edit Product</h1>
+        </div>
+
+        {error && <div className="message message-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="admin-form" style={{ maxWidth: '800px' }}>
+
+          {/* Basic Information */}
+          <div className="form-section" style={sectionStyle}>
+            <h3 style={sectionHeadStyle}>Basic Information</h3>
+
+            <div className="form-group">
+              <label>Product Name *</label>
+              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Enter product name" required />
             </div>
-            {product.images && product.images.length > 1 && (
-              <div className="image-thumbnails">
-                {product.images.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`${product.name} ${index + 1}`}
-                    className={selectedImage === index ? 'active' : ''}
-                    onClick={() => setSelectedImage(index)}
-                  />
-                ))}
+
+            <div className="form-group">
+              <label>Description</label>
+              <textarea name="description" value={formData.description} onChange={handleChange} rows="4" placeholder="Enter product description" />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>SKU</label>
+                <input type="text" name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g., PROD-001" />
               </div>
-            )}
+              <div className="form-group">
+                <label>Brand</label>
+                <input type="text" name="brand" value={formData.brand} onChange={handleChange} placeholder="e.g., Samsung" />
+              </div>
+            </div>
           </div>
 
-          <div className="product-info-section">
-            <h1>{product.name}</h1>
+          {/* Pricing & Stock */}
+          <div className="form-section" style={sectionStyle}>
+            <h3 style={sectionHeadStyle}>Pricing & Stock</h3>
 
-            {product.brand && (
-              <p className="product-brand">Brand: <strong>{product.brand}</strong></p>
-            )}
-
-            <div className="product-pricing">
-              <span className="current-price">${displayPrice}</span>
-              {hasDiscount && (
-                <>
-                  <span className="original-price">${product.price}</span>
-                  <span className="discount-badge">{discount}% OFF</span>
-                </>
-              )}
+            <div className="form-row">
+              <div className="form-group">
+                <label>Purchasing Price / Cost (₹)</label>
+                <input type="number" name="purchasingPrice" value={formData.purchasingPrice} onChange={handleChange} step="0.01" min="0" placeholder="0.00" />
+              </div>
+              <div className="form-group">
+                <label>Selling Price (₹) *</label>
+                <input type="number" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" placeholder="0.00" required />
+              </div>
             </div>
 
-            <div className="product-availability">
-              {product.stockQuantity > 0 ? (
-                <span className="in-stock">
-                  ✓ In Stock ({product.stockQuantity} available)
-                </span>
-              ) : (
-                <span className="out-of-stock">✗ Out of Stock</span>
-              )}
-            </div>
-
-            <div className="product-description">
-              <h3>Description</h3>
-              <p>{product.description}</p>
-            </div>
-
-            <div className="product-actions">
-              <div className="quantity-selector">
-                <label>Quantity:</label>
-                <div className="quantity-controls">
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                  >
-                    -
-                  </button>
-                  <span>{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
-                    disabled={quantity >= product.stockQuantity}
-                  >
-                    +
-                  </button>
+            {marginInfo && (
+              <div style={{ background: 'var(--primary-50)', border: '1px solid var(--primary-100)', borderRadius: 'var(--radius)', padding: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)', display: 'flex', gap: 'var(--spacing-xl)', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block' }}>Margin Amount</span>
+                  <strong style={{ color: marginInfo.color, fontSize: '1.1rem' }}>₹{marginInfo.margin.toFixed(2)}</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block' }}>Margin %</span>
+                  <strong style={{ color: marginInfo.color, fontSize: '1.1rem' }}>{marginInfo.pct}%</strong>
                 </div>
               </div>
+            )}
 
-              <button
-                className="btn btn-primary btn-large btn-block"
-                onClick={handleAddToCart}
-                disabled={adding || product.stockQuantity === 0}
-              >
-                {adding ? 'Adding...' : 'Add to Cart'}
-              </button>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Discount Price (₹)</label>
+                <input type="number" name="discountPrice" value={formData.discountPrice} onChange={handleChange} step="0.01" min="0" placeholder="0.00" />
+              </div>
+              <div className="form-group">
+                <label>Stock Quantity *</label>
+                <input type="number" name="stockQuantity" value={formData.stockQuantity} onChange={handleChange} min="0" placeholder="0" required />
+              </div>
             </div>
 
-            {product.category && (
-              <div className="product-meta">
-                <p>Category: <strong>{product.category.name}</strong></p>
-                {product.sku && <p>SKU: <strong>{product.sku}</strong></p>}
-              </div>
-            )}
+            <div className="form-group">
+              <label>Category *</label>
+              <select name="categoryId" value={formData.categoryId} onChange={handleChange} required>
+                <option value="">Select a category</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+
+          {/* Product Images */}
+          <div className="form-section" style={sectionStyle}>
+            <h3 style={sectionHeadStyle}>Product Images</h3>
+            <ImageUpload
+              multiple={true}
+              maxFiles={5}
+              existingImages={formData.images.map(url => ({ url }))}
+              onUploadComplete={handleImageUploadComplete}
+              onRemoveExisting={(index) => handleRemoveImage(index)}
+              onUploadError={(err) => showToast.error(err)}
+            />
+            <div style={{ marginTop: 'var(--spacing-md)' }}>
+              <button type="button" onClick={handleAddImageUrl} className="btn btn-ghost btn-sm">
+                <FiPlus /> Add Image URL Manually
+              </button>
+            </div>
+          </div>
+
+          {/* Additional Options */}
+          <div className="form-section" style={sectionStyle}>
+            <h3 style={sectionHeadStyle}>Additional Options</h3>
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
+                <input type="checkbox" name="featured" checked={formData.featured} onChange={handleChange} style={{ width: '20px', height: '20px', accentColor: 'var(--primary)' }} />
+                <FiStar style={{ color: formData.featured ? 'var(--warning)' : 'var(--gray-400)' }} />
+                <span>Mark as Featured Product</span>
+              </label>
+              <p style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginTop: 'var(--spacing-xs)', marginLeft: '28px' }}>
+                Featured products appear on the home page
+              </p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="form-actions" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end' }}>
+            <button type="button" onClick={() => router.push('/admin/products')} className="btn btn-secondary">
+              <FiX /> Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <FiSave /> {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
 }
+
+const sectionStyle = {
+  background: 'var(--white)',
+  padding: 'var(--spacing-xl)',
+  borderRadius: 'var(--radius-lg)',
+  marginBottom: 'var(--spacing-lg)',
+  boxShadow: 'var(--shadow-sm)'
+};
+
+const sectionHeadStyle = {
+  marginBottom: 'var(--spacing-lg)',
+  color: 'var(--gray-800)'
+};

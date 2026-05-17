@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const banners = [
   {

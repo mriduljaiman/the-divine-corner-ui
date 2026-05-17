@@ -13,7 +13,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
+      const requestUrl = error.config?.url || '';
+      // Don't redirect for auth check endpoints - 401 is expected for unauthenticated users
+      const isAuthCheck = requestUrl.includes('/users/profile') || requestUrl.includes('/auth/');
+      if (typeof window !== 'undefined' && !isAuthCheck) {
         window.location.href = '/auth/login';
       }
     }

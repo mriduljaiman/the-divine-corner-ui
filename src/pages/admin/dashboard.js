@@ -94,6 +94,9 @@ export default function AdminDashboard() {
               <Link href="/admin/stock-in" className="btn btn-primary">
                 Record Stock IN
               </Link>
+              <Link href="/admin/inventory" className="btn btn-primary">
+                Inventory Search
+              </Link>
               <Link href="/admin/orders" className="btn btn-secondary">
                 View All Orders
               </Link>

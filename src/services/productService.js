@@ -4,7 +4,7 @@ import api from './api';
 export const productService = {
   getAllProducts: (page = 0, size = 12, sortBy = 'createdAt', sortDir = 'DESC') =>
     api.get(`/products?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`),
-  
+
   searchProducts: (filters) => {
     const params = new URLSearchParams();
     if (filters.categoryId) params.append('categoryId', filters.categoryId);
@@ -15,7 +15,17 @@ export const productService = {
     params.append('size', filters.size || 12);
     return api.get(`/products/search?${params.toString()}`);
   },
-  
+
+  searchInventory: (search = '', page = 0, size = 50) => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('size', size);
+    params.append('sortBy', 'name');
+    params.append('sortDir', 'ASC');
+    if (search.trim()) params.append('search', search.trim());
+    return api.get(`/products/search?${params.toString()}`);
+  },
+
   getFeaturedProducts: () => api.get('/products/featured'),
   getProductById: (id) => api.get(`/products/${id}`),
   createProduct: (data) => api.post('/products', data),

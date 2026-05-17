@@ -79,9 +79,17 @@ out
 # Nuxt.js build / generate output
 .nuxt
 
-# Gatsby files
+# Gatsby files (not used here — public/ must NOT be ignored for Next.js)
 .cache/
-public
+# public  <-- intentionally not ignoring public/ (Next.js static assets)
+
+# PWA auto-generated service worker files (created by next-pwa at build time)
+public/sw.js
+public/workbox-*.js
+public/worker-*.js
+public/fallback-*.js
+public/sw.js.map
+public/workbox-*.js.map
 
 # vuepress build output
 .vuepress/dist
