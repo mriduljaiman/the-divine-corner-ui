@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
+import axios from '../../services/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,23 +14,56 @@ export default function RegisterPage() {
     lastName: '',
     phone: ''
   });
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [otpSuccess, setOtpSuccess] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (e.target.name === 'email') {
+      setOtpSent(false);
+      setOtpSuccess('');
+    }
+  };
+
+  const handleSendOtp = async () => {
+    setError('');
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError('Please enter a valid email address first');
+      return;
+    }
+    setSendingOtp(true);
+    try {
+      await axios.post('/auth/send-otp', { email: formData.email });
+      setOtpSent(true);
+      setOtpSuccess(`OTP sent to ${formData.email}. Check your inbox.`);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send OTP');
+    } finally {
+      setSendingOtp(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!otpSent) {
+      setError('Please request and enter the OTP first');
+      return;
+    }
+    if (!otp || otp.length !== 6) {
+      setError('Please enter the 6-digit OTP');
+      return;
+    }
     setLoading(true);
-
     try {
-      await register(formData);
+      await register({ ...formData, otp });
       router.push('/');
-    } catch (error) {
-      setError(error.response?.data?.message || 'Registration failed');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -40,7 +74,8 @@ export default function RegisterPage() {
       <div className="auth-container">
         <h1>Register</h1>
         {error && <div className="error-message">{error}</div>}
-        
+        {otpSuccess && <div className="success-message">{otpSuccess}</div>}
+
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
@@ -53,7 +88,6 @@ export default function RegisterPage() {
                 required
               />
             </div>
-
             <div className="form-group">
               <label>Last Name</label>
               <input
@@ -68,14 +102,42 @@ export default function RegisterPage() {
 
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <div className="email-otp-row">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                className="btn-send-otp"
+                onClick={handleSendOtp}
+                disabled={sendingOtp}
+              >
+                {sendingOtp ? 'Sending...' : otpSent ? 'Resend OTP' : 'Send OTP'}
+              </button>
+            </div>
           </div>
+
+          {otpSent && (
+            <div className="form-group">
+              <label>Enter OTP</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength="6"
+                pattern="\d{6}"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                placeholder="6-digit OTP"
+                required
+                autoFocus
+              />
+              <small>Check your email for the OTP (valid for 5 minutes)</small>
+            </div>
+          )}
 
           <div className="form-group">
             <label>Password</label>
@@ -96,10 +158,15 @@ export default function RegisterPage() {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
+              placeholder="Optional"
             />
           </div>
 
-          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary btn-block"
+            disabled={loading || !otpSent}
+          >
             {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
@@ -108,6 +175,45 @@ export default function RegisterPage() {
           Already have an account? <Link href="/auth/login">Login</Link>
         </p>
       </div>
+
+      <style jsx>{`
+        .email-otp-row {
+          display: flex;
+          gap: 8px;
+          align-items: stretch;
+        }
+        .email-otp-row input {
+          flex: 1;
+        }
+        .btn-send-otp {
+          padding: 0.6rem 1rem;
+          background: #6366f1;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .btn-send-otp:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .btn-send-otp:hover:not(:disabled) {
+          background: #4f46e5;
+        }
+        .success-message {
+          background: #f0fdf4;
+          color: #16a34a;
+          border: 1px solid #bbf7d0;
+          border-radius: 4px;
+          padding: 0.75rem 1rem;
+          margin-bottom: 1rem;
+          font-size: 0.9rem;
+        }
+      `}</style>
     </div>
   );
 }

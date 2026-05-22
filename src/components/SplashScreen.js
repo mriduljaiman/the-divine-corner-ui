@@ -77,14 +77,7 @@ export default function SplashScreen() {
           letter-spacing: 0.01em;
           line-height: 1.4;
           margin: 0;
-          color: #d4a017;
-          -webkit-text-stroke: 0.8px #aa0000;
-          text-shadow:
-            0.5px 0.5px 0 #aa0000,
-            -0.5px -0.5px 0 #aa0000,
-            0.5px -0.5px 0 #aa0000,
-            -0.5px 0.5px 0 #aa0000,
-            0 2px 12px rgba(212,160,23,0.3);
+          color: #cc0000;
           animation: splashSlideUp 0.5s ease 0.2s both;
         }
 

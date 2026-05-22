@@ -13,7 +13,7 @@ export default function TawkTo() {
     window.Tawk_API = window.Tawk_API || {};
     window.Tawk_LoadStart = new Date();
 
-    const widgetId = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID || '1';
+    const widgetId = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID || 'default';
 
     const s = document.createElement('script');
     s.async = true;

@@ -1053,7 +1053,7 @@ h6 { font-size: 1rem; }
 }
 
 .badge-discount {
-  background: var(--danger);
+  background: #16a34a;
   color: var(--white);
 }
 
