@@ -169,6 +169,36 @@ export default function ProductDetail() {
               <p className="pd-brand">Brand: <strong>{product.brand}</strong></p>
             )}
 
+            {/* Color Variants */}
+            {(product.color || (product.variants && product.variants.length > 0)) && (
+              <div className="pd-variants">
+                <p className="pd-variants-label">
+                  Color: <strong>{product.color || 'Default'}</strong>
+                </p>
+                <div className="pd-variants-swatches">
+                  {/* Current product swatch */}
+                  <div className="pd-swatch pd-swatch-active" title={product.color || 'Current'}>
+                    {product.images?.[0] ? (
+                      <img src={product.images[0]} alt={product.color || 'Current'} />
+                    ) : (
+                      <div className="pd-swatch-dot" style={{ background: product.color?.toLowerCase() || '#ccc' }} />
+                    )}
+                    <span className="pd-swatch-check">✓</span>
+                  </div>
+                  {/* Other variants */}
+                  {product.variants?.map(v => (
+                    <Link key={v.id} href={`/products/${v.id}`} className="pd-swatch" title={v.color || ''}>
+                      {v.thumbnail ? (
+                        <img src={v.thumbnail} alt={v.color || ''} />
+                      ) : (
+                        <div className="pd-swatch-dot" style={{ background: v.color?.toLowerCase() || '#ccc' }} />
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Rating */}
             <div className="pd-rating">
               {[...Array(5)].map((_, i) => (
@@ -450,6 +480,34 @@ export default function ProductDetail() {
         .pd-description p {
           font-size: 0.9375rem; line-height: 1.75;
           color: var(--gray-600); white-space: pre-wrap;
+        }
+
+        .pd-variants { margin-bottom: 1.25rem; }
+        .pd-variants-label {
+          font-size: 0.875rem; color: var(--gray-600);
+          margin-bottom: 0.625rem;
+        }
+        .pd-variants-swatches { display: flex; gap: 0.625rem; flex-wrap: wrap; }
+        .pd-swatch {
+          position: relative;
+          width: 56px; height: 56px;
+          border-radius: var(--radius);
+          overflow: hidden;
+          border: 2px solid var(--gray-200);
+          cursor: pointer;
+          transition: border-color 0.2s, transform 0.15s;
+          background: var(--gray-100);
+          display: flex; align-items: center; justify-content: center;
+          text-decoration: none;
+        }
+        .pd-swatch:hover { border-color: var(--primary); transform: scale(1.05); }
+        .pd-swatch-active { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+        .pd-swatch img { width: 100%; height: 100%; object-fit: cover; }
+        .pd-swatch-dot { width: 28px; height: 28px; border-radius: 50%; }
+        .pd-swatch-check {
+          position: absolute; bottom: 2px; right: 3px;
+          font-size: 10px; font-weight: 700;
+          color: var(--primary); line-height: 1;
         }
 
         .pd-back { margin-top: 2rem; }

@@ -1,13 +1,7 @@
-const TARGET_KB = 10;
-const MAX_DIMENSION = 1200;
+const TARGET_KB = 40;
+const MAX_WIDTH = 800;
+const MAX_HEIGHT = 1067; // 3:4 ratio
 
-/**
- * Compresses an image file to under 10KB using canvas.
- * Iteratively reduces quality first, then resolution if needed.
- * Returns a new File (JPEG) ready for upload.
- *
- * Usage: const compressed = await compressImage(file);
- */
 export function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -16,41 +10,31 @@ export function compressImage(file) {
       img.onload = () => {
         let { width, height } = img;
 
-        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-          if (width >= height) {
-            height = Math.round((height / width) * MAX_DIMENSION);
-            width = MAX_DIMENSION;
-          } else {
-            width = Math.round((width / height) * MAX_DIMENSION);
-            height = MAX_DIMENSION;
-          }
-        }
+        // Resize to fit within 800×1067 maintaining aspect ratio
+        const widthRatio = MAX_WIDTH / width;
+        const heightRatio = MAX_HEIGHT / height;
+        const scale = Math.min(1, widthRatio, heightRatio);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
 
         const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
         const outputName = file.name.replace(/\.[^.]+$/, '.jpg');
 
-        const tryCompress = (quality, scale) => {
-          const w = Math.round(width * scale);
-          const h = Math.round(height * scale);
-          canvas.width = w;
-          canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-
+        const tryCompress = (quality) => {
           canvas.toBlob((blob) => {
-            if (blob.size <= TARGET_KB * 1024) {
+            if (blob.size <= TARGET_KB * 1024 || quality <= 0.5) {
               resolve(new File([blob], outputName, { type: 'image/jpeg' }));
-            } else if (quality > 0.1) {
-              tryCompress(+(quality - 0.1).toFixed(2), scale);
-            } else if (scale > 0.2) {
-              tryCompress(0.6, +(scale - 0.15).toFixed(2));
             } else {
-              // Best effort — can't compress further without destroying image
-              resolve(new File([blob], outputName, { type: 'image/jpeg' }));
+              tryCompress(+(quality - 0.05).toFixed(2));
             }
           }, 'image/jpeg', quality);
         };
 
-        tryCompress(0.85, 1);
+        tryCompress(0.85);
       };
       img.src = e.target.result;
     };

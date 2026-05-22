@@ -25,6 +25,8 @@ export default function EditProduct() {
     categoryId: '',
     sku: '',
     brand: '',
+    color: '',
+    variantGroupId: '',
     featured: false,
     images: []
   });
@@ -53,6 +55,8 @@ export default function EditProduct() {
         categoryId: p.category?.id || '',
         sku: p.sku || '',
         brand: p.brand || '',
+        color: p.color || '',
+        variantGroupId: p.variantGroupId || '',
         featured: p.featured || false,
         images: p.images || []
       });
@@ -256,6 +260,27 @@ export default function EditProduct() {
               <button type="button" onClick={handleAddImageUrl} className="btn btn-ghost btn-sm">
                 <FiPlus /> Add Image URL Manually
               </button>
+            </div>
+          </div>
+
+          {/* Color Variants */}
+          <div className="form-section" style={sectionStyle}>
+            <h3 style={{ ...sectionHeadStyle, marginBottom: '0.25rem' }}>Color Variants</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginBottom: 'var(--spacing-lg)' }}>
+              Link products that are the same design in different colors (like Meesho color swatches).
+            </p>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="edit-color">Color</label>
+                <input id="edit-color" type="text" name="color" value={formData.color} onChange={handleChange} placeholder="e.g., Red, Blue, Black" />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-variantGroupId">Variant Group ID</label>
+                <input id="edit-variantGroupId" type="text" name="variantGroupId" value={formData.variantGroupId} onChange={handleChange} placeholder="Same ID links products as color variants" />
+                <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.25rem' }}>
+                  Give all color variants the same group ID (e.g., <em>floral-kurti-001</em>)
+                </p>
+              </div>
             </div>
           </div>
 

@@ -23,6 +23,8 @@ export default function NewProduct() {
     categoryId: '',
     sku: '',
     brand: '',
+    color: '',
+    variantGroupId: '',
     featured: false,
     images: []
   });
@@ -328,6 +330,41 @@ export default function NewProduct() {
               >
                 <FiPlus /> Add Image URL Manually
               </button>
+            </div>
+          </div>
+
+          {/* Color Variants */}
+          <div className="form-section" style={{ background: 'var(--white)', padding: 'var(--spacing-xl)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--spacing-lg)', boxShadow: 'var(--shadow-sm)' }}>
+            <h3 style={{ marginBottom: '0.25rem', color: 'var(--gray-800)' }}>Color Variants</h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginBottom: 'var(--spacing-lg)' }}>
+              Link products that are the same design in different colors (like Meesho color swatches).
+            </p>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Color</label>
+                <input
+                  type="text"
+                  name="color"
+                  value={formData.color}
+                  onChange={handleChange}
+                  placeholder="e.g., Red, Blue, Black"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Variant Group ID</label>
+                <input
+                  type="text"
+                  name="variantGroupId"
+                  value={formData.variantGroupId}
+                  onChange={handleChange}
+                  placeholder="Same ID links products as color variants"
+                />
+                <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.25rem' }}>
+                  Give all color variants the same group ID (e.g., <em>floral-kurti-001</em>)
+                </p>
+              </div>
             </div>
           </div>
 
