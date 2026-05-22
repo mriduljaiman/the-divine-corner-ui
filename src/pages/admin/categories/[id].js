@@ -4,7 +4,7 @@ import axios from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function EditCategory() {
-  const EMOJI_OPTIONS = ['🕉️','📿','🙏','🪔','🌸','🌺','🌼','🔱','☯️','🛕','🌙','⭐','💫','🌟','🕯️','🪷','🌿','🍃','💎','🔮'];
+  const EMOJI_OPTIONS = ['📚','🎁','🧸','✏️','🛍️','🎀','🖊️','📖','🎮','🧩','🎨','🪀','📦','🎭','🌸','🪔','💎','🕯️','🙏','🔮','🌿','⭐','🎯','🏠','👗','👟','🍬','🎵','💻','📱'];
 
   const [formData, setFormData] = useState({
     name: '',

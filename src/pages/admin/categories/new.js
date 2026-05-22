@@ -4,7 +4,7 @@ import axios from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function NewCategory() {
-  const EMOJI_OPTIONS = ['🕉️','📿','🙏','🪔','🌸','🌺','🌼','🔱','☯️','🛕','🌙','⭐','💫','🌟','🕯️','🪷','🌿','🍃','💎','🔮'];
+  const EMOJI_OPTIONS = ['📚','🎁','🧸','✏️','🛍️','🎀','🖊️','📖','🎮','🧩','🎨','🪀','📦','🎭','🌸','🪔','💎','🕯️','🙏','🔮','🌿','⭐','🎯','🏠','👗','👟','🍬','🎵','💻','📱'];
 
   const [formData, setFormData] = useState({
     name: '',

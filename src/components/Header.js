@@ -17,7 +17,7 @@ import {
   FiGrid,
   FiInfo,
   FiMail,
-  FiSearch,
+
   FiTag,
 } from 'react-icons/fi';
 
@@ -28,12 +28,9 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const userMenuRef = useRef(null);
-  const searchInputRef = useRef(null);
-  const searchWrapRef = useRef(null);
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -53,9 +50,6 @@ const Header = () => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenuOpen(false);
       }
-      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
-        setSearchOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -64,14 +58,7 @@ const Header = () => {
   useEffect(() => {
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
-    setSearchOpen(false);
   }, [router.pathname]);
-
-  useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [searchOpen]);
 
   // Sync search input with URL query on page load
   useEffect(() => {
@@ -102,7 +89,6 @@ const Header = () => {
     const q = searchQuery.trim();
     if (!q) return;
     router.push(`/products?search=${encodeURIComponent(q)}`);
-    setSearchOpen(false);
     setMobileMenuOpen(false);
   };
 
@@ -142,40 +128,26 @@ const Header = () => {
           </nav>
 
           {/* Desktop Search */}
-          <div className="header-search-wrap" ref={searchWrapRef}>
-            {searchOpen ? (
-              <form className="header-search-form" onSubmit={handleSearch}>
-                <FiSearch className="search-form-icon" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="header-search-input"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    className="search-clear-btn"
-                    onClick={() => setSearchQuery('')}
-                    aria-label="Clear search"
-                  >
-                    <FiX />
-                  </button>
-                )}
-                <button type="submit" className="search-submit-btn">Search</button>
-              </form>
-            ) : (
-              <button
-                className="header-search-toggle"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Open search"
-              >
-                <FiSearch />
-                <span>Search</span>
-              </button>
-            )}
+          <div className="header-search-wrap">
+            <form className="header-search-form" onSubmit={handleSearch}>
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="header-search-input"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear"
+                >
+                  <FiX />
+                </button>
+              )}
+            </form>
           </div>
 
           {/* Header Actions */}
@@ -252,7 +224,6 @@ const Header = () => {
         {/* Mobile Search Bar — always visible on mobile */}
         <div className="mobile-search-bar">
           <form className="mobile-search-form" onSubmit={handleSearch}>
-            <FiSearch className="mobile-search-icon" />
             <input
               type="text"
               placeholder="Search products..."
@@ -270,9 +241,6 @@ const Header = () => {
                 <FiX />
               </button>
             )}
-            <button type="submit" className="mobile-search-submit" aria-label="Search">
-              <FiSearch />
-            </button>
           </form>
         </div>
 
