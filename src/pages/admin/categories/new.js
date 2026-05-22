@@ -4,10 +4,13 @@ import axios from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function NewCategory() {
+  const EMOJI_OPTIONS = ['🕉️','📿','🙏','🪔','🌸','🌺','🌼','🔱','☯️','🛕','🌙','⭐','💫','🌟','🕯️','🪷','🌿','🍃','💎','🔮'];
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     imageUrl: '',
+    icon: '',
     skuPrefix: ''
   });
   const [loading, setLoading] = useState(false);
@@ -95,7 +98,37 @@ export default function NewCategory() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="imageUrl">Image URL</label>
+          <label htmlFor="icon">Category Icon (Emoji)</label>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
+            {EMOJI_OPTIONS.map(emoji => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => setFormData({ ...formData, icon: emoji })}
+                style={{
+                  fontSize: '1.5rem', padding: '4px 8px', cursor: 'pointer',
+                  border: formData.icon === emoji ? '2px solid #6366f1' : '2px solid #e5e7eb',
+                  borderRadius: '6px', background: 'white'
+                }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            id="icon"
+            name="icon"
+            value={formData.icon}
+            onChange={handleChange}
+            placeholder="Or type any emoji e.g. 🕉️"
+            maxLength="10"
+          />
+          <small>This icon will appear in the Shop by Category section</small>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="imageUrl">Image URL (optional)</label>
           <input
             type="text"
             id="imageUrl"

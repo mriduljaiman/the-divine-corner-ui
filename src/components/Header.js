@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { categoryService } from '../services/categoryService';
 import {
   FiMenu,
   FiX,
@@ -17,6 +18,7 @@ import {
   FiInfo,
   FiMail,
   FiSearch,
+  FiTag,
 } from 'react-icons/fi';
 
 const Header = () => {
@@ -28,14 +30,22 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categories, setCategories] = useState([]);
   const userMenuRef = useRef(null);
   const searchInputRef = useRef(null);
   const searchWrapRef = useRef(null);
+  const debounceRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    categoryService.getAllActiveCategories()
+      .then(res => setCategories(res.data || []))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -75,8 +85,20 @@ const Header = () => {
     setUserMenuOpen(false);
   };
 
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const q = value.trim();
+      if (q) {
+        router.push(`/products?search=${encodeURIComponent(q)}`);
+      }
+    }, 500);
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
+    clearTimeout(debounceRef.current);
     const q = searchQuery.trim();
     if (!q) return;
     router.push(`/products?search=${encodeURIComponent(q)}`);
@@ -126,7 +148,7 @@ const Header = () => {
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="header-search-input"
                 />
                 {searchQuery && (
@@ -232,7 +254,7 @@ const Header = () => {
               type="text"
               placeholder="Search products..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="mobile-search-input"
             />
             {searchQuery && (
@@ -267,6 +289,24 @@ const Header = () => {
               );
             })}
           </nav>
+
+          {categories.length > 0 && (
+            <div className="mobile-categories">
+              <p className="mobile-categories-title"><FiTag /> Categories</p>
+              <div className="mobile-categories-list">
+                {categories.map(cat => (
+                  <Link
+                    key={cat.id}
+                    href={`/products?category=${cat.id}`}
+                    className="mobile-category-link"
+                  >
+                    {cat.icon && <span className="mobile-cat-icon">{cat.icon}</span>}
+                    {cat.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {!isAuthenticated() && (
             <div className="mobile-auth-buttons">

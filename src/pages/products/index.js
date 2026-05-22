@@ -23,10 +23,14 @@ export default function ProductsPage() {
   }, []);
 
   useEffect(() => {
-    if (router.query.category) {
-      setFilters(prev => ({ ...prev, categoryId: router.query.category }));
-    }
-  }, [router.query.category]);
+    if (!router.isReady) return;
+    setFilters(prev => ({
+      ...prev,
+      categoryId: router.query.category || '',
+      search: router.query.search || '',
+      page: 0,
+    }));
+  }, [router.isReady, router.query.category, router.query.search]);
 
   useEffect(() => {
     fetchProducts();

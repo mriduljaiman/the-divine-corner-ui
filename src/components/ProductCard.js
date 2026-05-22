@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import { showToast } from '../utils/toast';
 import {
   FiShoppingCart,
@@ -14,7 +13,6 @@ import {
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
-  const { isAuthenticated } = useAuth();
   const [adding, setAdding] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -23,11 +21,6 @@ const ProductCard = ({ product }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthenticated()) {
-      showToast.warning('Please login to add items to cart');
-      return;
-    }
-
     if (product.stockQuantity === 0) {
       showToast.error('This product is out of stock');
       return;
@@ -35,7 +28,7 @@ const ProductCard = ({ product }) => {
 
     try {
       setAdding(true);
-      await addToCart(product.id, 1);
+      await addToCart(product.id, 1, { name: product.name, price: product.price, images: product.images });
       showToast.addedToCart(product.name);
     } catch (error) {
       showToast.error(error.response?.data?.message || 'Failed to add to cart');

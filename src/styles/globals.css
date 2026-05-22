@@ -1482,6 +1482,47 @@ h6 { font-size: 1rem; }
 .category-card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
+}
+
+.category-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0;
+  transition: color var(--transition);
+}
+
+.category-card:hover h3 {
+  color: var(--primary);
+}
+
+.category-icon-wrap {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-50);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--spacing-md);
+  transition: background var(--transition);
+}
+
+.category-card:hover .category-icon-wrap {
+  background: var(--primary-100);
+}
+
+.category-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.category-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
 }
 
 .category-image {
@@ -1495,6 +1536,76 @@ h6 { font-size: 1rem; }
 .category-name {
   font-weight: 600;
   color: var(--gray-800);
+}
+
+/* Section header row */
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+}
+
+.section-header-row .section-title {
+  margin-bottom: 0;
+}
+
+.view-all-link {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 0.9375rem;
+  transition: opacity var(--transition-fast);
+}
+
+.view-all-link:hover {
+  opacity: 0.8;
+}
+
+/* Mobile categories in hamburger */
+.mobile-categories {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+}
+
+.mobile-categories-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-sm);
+}
+
+.mobile-categories-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.mobile-category-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  transition: all var(--transition-fast);
+}
+
+.mobile-category-link:hover {
+  background: var(--primary-50);
+  color: var(--primary);
+}
+
+.mobile-cat-icon {
+  font-size: 1rem;
 }
 
 /* ============ Auth Pages ============ */
