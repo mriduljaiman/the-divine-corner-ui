@@ -5,7 +5,7 @@ import { productService } from '../../../services/productService';
 import { categoryService } from '../../../services/categoryService';
 import ImageUpload from '../../../components/ImageUpload';
 import { showToast } from '../../../utils/toast';
-import { FiSave, FiX, FiStar, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiSave, FiX, FiStar, FiPlus } from 'react-icons/fi';
 
 export default function EditProduct() {
   const router = useRouter();
@@ -73,9 +73,24 @@ export default function EditProduct() {
     }
   };
 
+  const generateSku = async (categoryId) => {
+    const cat = categories.find(c => String(c.id) === String(categoryId));
+    if (!cat) return;
+    const prefix = cat.skuPrefix || cat.name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+    try {
+      const res = await productService.searchProducts({ categoryId, size: 1, page: 0 });
+      const count = res.data.totalElements || 0;
+      const num = String(count + 1).padStart(3, '0');
+      setFormData(prev => ({ ...prev, sku: `${prefix}-${num}` }));
+    } catch {
+      setFormData(prev => ({ ...prev, sku: `${prefix}-001` }));
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+    if (name === 'categoryId' && value) generateSku(value);
   };
 
   const handleImageUploadComplete = (results) => {
@@ -164,10 +179,20 @@ export default function EditProduct() {
               <textarea name="description" value={formData.description} onChange={handleChange} rows="4" placeholder="Enter product description" />
             </div>
 
+            <div className="form-group">
+              <label>Category *</label>
+              <select name="categoryId" value={formData.categoryId} onChange={handleChange} required>
+                <option value="">Select a category</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-row">
               <div className="form-group">
-                <label>SKU</label>
-                <input type="text" name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g., PROD-001" />
+                <label>SKU <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 400 }}>(auto-fills on category change)</span></label>
+                <input type="text" name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g., BKS-001" />
               </div>
               <div className="form-group">
                 <label>Brand</label>
@@ -213,16 +238,6 @@ export default function EditProduct() {
                 <label>Stock Quantity *</label>
                 <input type="number" name="stockQuantity" value={formData.stockQuantity} onChange={handleChange} min="0" placeholder="0" required />
               </div>
-            </div>
-
-            <div className="form-group">
-              <label>Category *</label>
-              <select name="categoryId" value={formData.categoryId} onChange={handleChange} required>
-                <option value="">Select a category</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
             </div>
           </div>
 

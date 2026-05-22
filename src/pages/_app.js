@@ -4,7 +4,8 @@ import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import ChatWidget from '../components/ChatWidget';
+import TawkTo from '../components/TawkTo';
+import PWAInstallBanner from '../components/PWAInstallBanner';
 
 const Toaster = dynamic(
   () => import('react-hot-toast').then((mod) => mod.Toaster),
@@ -26,7 +27,8 @@ function MyApp({ Component, pageProps }) {
     <AuthProvider>
       <CartProvider>
         {getLayout(<Component {...pageProps} />)}
-        <ChatWidget />
+        <TawkTo />
+        <PWAInstallBanner />
         <Toaster
           position="top-right"
           toastOptions={{

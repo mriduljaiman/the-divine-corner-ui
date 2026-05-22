@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/backend/:path*",
+      "destination": "https://srv1342889.hstgr.cloud/api/:path*"
+    }
+  ],
   "headers": [
     {
       "source": "/sw.js",

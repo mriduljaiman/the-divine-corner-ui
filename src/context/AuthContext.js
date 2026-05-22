@@ -1,6 +1,7 @@
 // ============ context/AuthContext.js ============
 import { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { tokenStore } from '../services/api';
 import { useRouter } from 'next/router';
 
 const AuthContext = createContext();
@@ -38,7 +39,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await authService.logout();
+    try { await authService.logout(); } catch (_) {}
+    tokenStore.clear();
     setUser(null);
     router.push('/');
   };

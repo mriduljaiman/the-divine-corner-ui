@@ -37,21 +37,7 @@ const withPWA = require('next-pwa')({
         },
       },
     },
-    {
-      urlPattern: /^https?:\/\/.*\/api\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 5, // 5 minutes
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
+    // API calls are NOT cached — auth requires fresh network requests always
     {
       urlPattern: /\.(js|css|woff|woff2|ttf|eot)$/i,
       handler: 'StaleWhileRevalidate',

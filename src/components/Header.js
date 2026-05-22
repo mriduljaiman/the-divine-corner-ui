@@ -16,6 +16,7 @@ import {
   FiGrid,
   FiInfo,
   FiMail,
+  FiSearch,
 } from 'react-icons/fi';
 
 const Header = () => {
@@ -25,37 +26,62 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const userMenuRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const searchWrapRef = useRef(null);
 
-  // Handle scroll effect
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserMenuOpen(false);
+      }
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setSearchOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
+    setSearchOpen(false);
   }, [router.pathname]);
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  // Sync search input with URL query on page load
+  useEffect(() => {
+    if (router.query.search) {
+      setSearchQuery(router.query.search);
+    }
+  }, [router.query.search]);
 
   const handleLogout = async () => {
     await logout();
     setUserMenuOpen(false);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    router.push(`/products?search=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+    setMobileMenuOpen(false);
   };
 
   const cartCount = getCartItemsCount();
@@ -90,11 +116,47 @@ const Header = () => {
             ))}
           </nav>
 
+          {/* Desktop Search */}
+          <div className="header-search-wrap" ref={searchWrapRef}>
+            {searchOpen ? (
+              <form className="header-search-form" onSubmit={handleSearch}>
+                <FiSearch className="search-form-icon" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="header-search-input"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="search-clear-btn"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                  >
+                    <FiX />
+                  </button>
+                )}
+                <button type="submit" className="search-submit-btn">Search</button>
+              </form>
+            ) : (
+              <button
+                className="header-search-toggle"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Open search"
+              >
+                <FiSearch />
+                <span>Search</span>
+              </button>
+            )}
+          </div>
+
           {/* Header Actions */}
           <div className="header-actions">
             {isAuthenticated() ? (
               <>
-                {/* Cart */}
                 <Link href="/cart" className="cart-btn">
                   <FiShoppingCart className="cart-icon" />
                   {cartCount > 0 && (
@@ -102,7 +164,6 @@ const Header = () => {
                   )}
                 </Link>
 
-                {/* User Menu */}
                 <div className="user-menu-container" ref={userMenuRef}>
                   <button
                     className="user-menu-btn"
@@ -147,12 +208,8 @@ const Header = () => {
               </>
             ) : (
               <div className="auth-buttons">
-                <Link href="/auth/login" className="btn btn-ghost">
-                  Login
-                </Link>
-                <Link href="/auth/register" className="btn btn-primary">
-                  Register
-                </Link>
+                <Link href="/auth/login" className="btn btn-ghost">Login</Link>
+                <Link href="/auth/register" className="btn btn-primary">Register</Link>
               </div>
             )}
 
@@ -165,6 +222,33 @@ const Header = () => {
               {mobileMenuOpen ? <FiX /> : <FiMenu />}
             </button>
           </div>
+        </div>
+
+        {/* Mobile Search Bar — always visible on mobile */}
+        <div className="mobile-search-bar">
+          <form className="mobile-search-form" onSubmit={handleSearch}>
+            <FiSearch className="mobile-search-icon" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mobile-search-input"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear"
+              >
+                <FiX />
+              </button>
+            )}
+            <button type="submit" className="mobile-search-submit" aria-label="Search">
+              <FiSearch />
+            </button>
+          </form>
         </div>
 
         {/* Mobile Navigation */}
@@ -186,12 +270,8 @@ const Header = () => {
 
           {!isAuthenticated() && (
             <div className="mobile-auth-buttons">
-              <Link href="/auth/login" className="btn btn-ghost btn-block">
-                Login
-              </Link>
-              <Link href="/auth/register" className="btn btn-primary btn-block">
-                Register
-              </Link>
+              <Link href="/auth/login" className="btn btn-ghost btn-block">Login</Link>
+              <Link href="/auth/register" className="btn btn-primary btn-block">Register</Link>
             </div>
           )}
         </div>

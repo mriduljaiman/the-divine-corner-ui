@@ -5,7 +5,7 @@ import { productService } from '../../../services/productService';
 import { categoryService } from '../../../services/categoryService';
 import ImageUpload from '../../../components/ImageUpload';
 import { showToast } from '../../../utils/toast';
-import { FiPlus, FiTrash2, FiSave, FiX, FiStar } from 'react-icons/fi';
+import { FiPlus, FiSave, FiX, FiStar } from 'react-icons/fi';
 
 export default function NewProduct() {
   const router = useRouter();
@@ -13,7 +13,6 @@ export default function NewProduct() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showUrlInput, setShowUrlInput] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -51,14 +50,14 @@ export default function NewProduct() {
   const generateSku = async (categoryId) => {
     const cat = categories.find(c => String(c.id) === String(categoryId));
     if (!cat) return;
-    const prefix = cat.name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+    const prefix = cat.skuPrefix || cat.name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
     try {
       const res = await productService.searchProducts({ categoryId, size: 1, page: 0 });
       const count = res.data.totalElements || 0;
       const num = String(count + 1).padStart(3, '0');
-      setFormData(prev => ({ ...prev, sku: `${prefix}${num}` }));
+      setFormData(prev => ({ ...prev, sku: `${prefix}-${num}` }));
     } catch {
-      setFormData(prev => ({ ...prev, sku: `${prefix}001` }));
+      setFormData(prev => ({ ...prev, sku: `${prefix}-001` }));
     }
   };
 
@@ -161,20 +160,36 @@ export default function NewProduct() {
             </div>
 
             <div className="form-group">
-              <label>Description *</label>
+              <label>Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows="4"
                 placeholder="Enter product description"
-                required
               />
+            </div>
+
+            <div className="form-group">
+              <label>Category *</label>
+              <select
+                name="categoryId"
+                value={formData.categoryId}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select a category</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label>SKU <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 400 }}>(auto-generated on category select)</span></label>
+                <label>SKU <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 400 }}>(auto-filled on category select)</span></label>
                 <input
                   type="text"
                   name="sku"
@@ -278,36 +293,17 @@ export default function NewProduct() {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label>Stock Quantity *</label>
-                <input
-                  type="number"
-                  name="stockQuantity"
-                  value={formData.stockQuantity}
-                  onChange={handleChange}
-                  min="0"
-                  placeholder="0"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Category *</label>
-                <select
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select a category</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="form-group">
+              <label>Stock Quantity *</label>
+              <input
+                type="number"
+                name="stockQuantity"
+                value={formData.stockQuantity}
+                onChange={handleChange}
+                min="0"
+                placeholder="0"
+                required
+              />
             </div>
           </div>
 

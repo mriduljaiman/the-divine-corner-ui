@@ -1,37 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { cloudinaryService } from '../services/cloudinaryService';
-import { FiUploadCloud, FiX, FiImage, FiAlertCircle } from 'react-icons/fi';
+import { FiUploadCloud, FiX, FiAlertCircle } from 'react-icons/fi';
+import { compressImage } from '../utils/compressImage';
 
-const TARGET_SIZE_KB = 200;
-
-const compressImage = (file) =>
-  new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let { width, height } = img;
-        const MAX = 1200;
-        if (width > MAX || height > MAX) {
-          if (width >= height) { height = Math.round((height / width) * MAX); width = MAX; }
-          else { width = Math.round((width / height) * MAX); height = MAX; }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        const tryQ = (q) => {
-          canvas.toBlob((blob) => {
-            if (blob.size > TARGET_SIZE_KB * 1024 && q > 0.15) tryQ(+(q - 0.1).toFixed(2));
-            else resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
-          }, 'image/jpeg', q);
-        };
-        tryQ(0.85);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+const TARGET_SIZE_KB = 10;
 
 const ImageUpload = ({
   onUploadComplete,
@@ -239,7 +211,7 @@ const ImageUpload = ({
             </p>
             <p className="drop-zone-hint">
               {multiple ? `Up to ${maxFiles} images, ` : ''}
-              Auto-compressed to ~{TARGET_SIZE_KB}KB (JPEG, PNG, GIF, WebP)
+              Auto-compressed to under {TARGET_SIZE_KB}KB (JPEG, PNG, GIF, WebP)
             </p>
           </div>
         )}

@@ -85,7 +85,7 @@ export default function AdminProducts() {
                     )}
                   </td>
                   <td>{product.name}</td>
-                  <td>${product.price}</td>
+                  <td>₹{product.price?.toLocaleString('en-IN')}</td>
                   <td className={product.stockQuantity < 10 ? 'low-stock' : ''}>
                     {product.stockQuantity}
                   </td>

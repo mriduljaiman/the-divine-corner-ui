@@ -49,6 +49,7 @@ const ProductCard = ({ product }) => {
   const discountPercent = hasDiscount
     ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
     : 0;
+  const showDiscountBadge = hasDiscount && discountPercent > 0;
 
   const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
 
@@ -83,8 +84,8 @@ const ProductCard = ({ product }) => {
                 <FiStar /> Featured
               </span>
             )}
-            {hasDiscount && (
-              <span className="badge badge-discount">-{discountPercent}%</span>
+            {showDiscountBadge && (
+              <span className="badge badge-discount">{discountPercent}% Discount</span>
             )}
             {product.stockQuantity === 0 && (
               <span className="badge badge-out-of-stock">Out of Stock</span>
@@ -104,7 +105,7 @@ const ProductCard = ({ product }) => {
 
         {/* Product Info */}
         <div className="product-info">
-          <p className="product-category">{product.categoryName || 'Uncategorized'}</p>
+          <p className="product-category">{product.category?.name || product.categoryName || ''}</p>
           <h3 className="product-name">{product.name}</h3>
 
           {/* Rating placeholder */}
