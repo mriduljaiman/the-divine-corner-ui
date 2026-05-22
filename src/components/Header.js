@@ -5,39 +5,18 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { categoryService } from '../services/categoryService';
 import {
-  FiMenu,
-  FiX,
-  FiShoppingCart,
-  FiUser,
-  FiLogOut,
-  FiPackage,
-  FiSettings,
-  FiChevronDown,
-  FiHome,
-  FiGrid,
-  FiInfo,
-  FiMail,
-
-  FiTag,
+  FiMenu, FiX, FiShoppingCart, FiUser, FiLogOut,
+  FiPackage, FiSettings, FiSearch, FiHeart, FiChevronRight,
 } from 'react-icons/fi';
 
 const Header = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { getCartItemsCount } = useCart();
   const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
-  const userMenuRef = useRef(null);
   const debounceRef = useRef(null);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     categoryService.getAllActiveCategories()
@@ -46,30 +25,16 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    setMobileMenuOpen(false);
-    setUserMenuOpen(false);
+    setDrawerOpen(false);
   }, [router.pathname]);
 
-  // Sync search input with URL query on page load
   useEffect(() => {
-    if (router.query.search) {
-      setSearchQuery(router.query.search);
-    }
+    if (router.query.search) setSearchQuery(router.query.search);
   }, [router.query.search]);
 
   const handleLogout = async () => {
     await logout();
-    setUserMenuOpen(false);
+    setDrawerOpen(false);
   };
 
   const handleSearchChange = (value) => {
@@ -77,9 +42,7 @@ const Header = () => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const q = value.trim();
-      if (q) {
-        router.push(`/products?search=${encodeURIComponent(q)}`);
-      }
+      if (q) router.push(`/products?search=${encodeURIComponent(q)}`);
     }, 500);
   };
 
@@ -89,205 +52,146 @@ const Header = () => {
     const q = searchQuery.trim();
     if (!q) return;
     router.push(`/products?search=${encodeURIComponent(q)}`);
-    setMobileMenuOpen(false);
   };
 
   const cartCount = getCartItemsCount();
 
-  const navLinks = [
-    { href: '/', label: 'Home', icon: FiHome },
-    { href: '/products', label: 'Products', icon: FiGrid },
-    { href: '/about', label: 'About', icon: FiInfo },
-    { href: '/contact', label: 'Contact', icon: FiMail },
-  ];
-
   return (
-    <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
-      <div className="container">
-        <div className="header-content">
-          {/* Logo */}
-          <Link href="/" className="logo">
-            <img
-              src="/logo_tagline.png"
-              alt="The Divine Corner"
-              className="logo-img"
-            />
+    <>
+      <header className="app-header">
+        {/* Top Row */}
+        <div className="app-header-top">
+          <button className="app-icon-btn" onClick={() => setDrawerOpen(true)} aria-label="Menu">
+            <FiMenu size={22} />
+          </button>
+
+          <Link href="/" className="app-logo-link">
+            <img src="/logo_tagline.png" alt="The Divine Corner" className="app-logo-img" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="nav-desktop">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`nav-link ${router.pathname === link.href ? 'active' : ''}`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Desktop Search */}
-          <div className="header-search-wrap">
-            <form className="header-search-form" onSubmit={handleSearch}>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="header-search-input"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  className="search-clear-btn"
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear"
-                >
-                  <FiX />
-                </button>
-              )}
-            </form>
-          </div>
-
-          {/* Header Actions */}
-          <div className="header-actions">
-            {isAuthenticated() ? (
-              <>
-                <Link href="/cart" className="cart-btn">
-                  <FiShoppingCart className="cart-icon" />
-                  {cartCount > 0 && (
-                    <span className="cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
-                  )}
-                </Link>
-
-                <div className="user-menu-container" ref={userMenuRef}>
-                  <button
-                    className="user-menu-btn"
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    aria-expanded={userMenuOpen}
-                  >
-                    <div className="user-avatar">
-                      {user?.firstName?.charAt(0).toUpperCase() || 'U'}
-                    </div>
-                    <span className="user-name">{user?.firstName}</span>
-                    <FiChevronDown className={`chevron ${userMenuOpen ? 'rotate' : ''}`} />
-                  </button>
-
-                  {userMenuOpen && (
-                    <div className="user-dropdown">
-                      <div className="dropdown-header">
-                        <p className="dropdown-name">{user?.firstName} {user?.lastName}</p>
-                        <p className="dropdown-email">{user?.email}</p>
-                      </div>
-                      <div className="dropdown-divider" />
-                      <Link href="/profile" className="dropdown-item">
-                        <FiUser /> My Profile
-                      </Link>
-                      <Link href="/orders" className="dropdown-item">
-                        <FiPackage /> My Orders
-                      </Link>
-                      {isAdmin() && (
-                        <>
-                          <div className="dropdown-divider" />
-                          <Link href="/admin/dashboard" className="dropdown-item admin-link">
-                            <FiSettings /> Admin Panel
-                          </Link>
-                        </>
-                      )}
-                      <div className="dropdown-divider" />
-                      <button onClick={handleLogout} className="dropdown-item logout-btn">
-                        <FiLogOut /> Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="auth-buttons">
-                <Link href="/auth/login" className="btn btn-ghost">Login</Link>
-                <Link href="/auth/register" className="btn btn-primary">Register</Link>
-              </div>
-            )}
-
-            {/* Mobile Menu Toggle */}
-            <button
-              className="mobile-menu-btn"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-            >
-              {mobileMenuOpen ? <FiX /> : <FiMenu />}
+          <div className="app-header-icons">
+            <button className="app-icon-btn" aria-label="Wishlist">
+              <FiHeart size={21} />
             </button>
+            <Link href="/cart" className="app-icon-btn app-cart-btn" aria-label="Cart">
+              <FiShoppingCart size={21} />
+              {cartCount > 0 && (
+                <span className="app-cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
+              )}
+            </Link>
           </div>
         </div>
 
-        {/* Mobile Search Bar — always visible on mobile */}
-        <div className="mobile-search-bar">
-          <form className="mobile-search-form" onSubmit={handleSearch}>
+        {/* Search Bar */}
+        <div className="app-header-search">
+          <form onSubmit={handleSearch} className="app-search-form">
+            <FiSearch className="app-search-icon" size={15} />
             <input
               type="text"
-              placeholder="Search products..."
+              className="app-search-input"
+              placeholder="Search by Keyword or Product ID"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="mobile-search-input"
             />
             {searchQuery && (
               <button
                 type="button"
-                className="search-clear-btn"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear"
+                className="app-search-clear"
+                onClick={() => { setSearchQuery(''); }}
+                aria-label="Clear search"
               >
-                <FiX />
+                <FiX size={13} />
               </button>
             )}
           </form>
         </div>
+      </header>
 
-        {/* Mobile Navigation */}
-        <div className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
-          <nav className="mobile-nav-links">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`mobile-nav-link ${router.pathname === link.href ? 'active' : ''}`}
-                >
-                  <Icon /> {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+      {/* Drawer Overlay */}
+      {drawerOpen && (
+        <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />
+      )}
 
-          {categories.length > 0 && (
-            <div className="mobile-categories">
-              <p className="mobile-categories-title"><FiTag /> Categories</p>
-              <div className="mobile-categories-list">
-                {categories.map(cat => (
-                  <Link
-                    key={cat.id}
-                    href={`/products?category=${cat.id}`}
-                    className="mobile-category-link"
-                  >
-                    {cat.icon && <span className="mobile-cat-icon">{cat.icon}</span>}
-                    {cat.name}
-                  </Link>
-                ))}
+      {/* Side Drawer */}
+      <div className={`side-drawer ${drawerOpen ? 'open' : ''}`}>
+        <div className="drawer-header">
+          {isAuthenticated() ? (
+            <div className="drawer-user-info">
+              <div className="drawer-avatar">
+                {user?.firstName?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="drawer-user-text">
+                <p className="drawer-user-name">{user?.firstName} {user?.lastName}</p>
+                <p className="drawer-user-email">{user?.email}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="drawer-guest">
+              <FiUser size={32} className="drawer-guest-icon" />
+              <div>
+                <p className="drawer-guest-msg">Sign in to see your orders</p>
+                <Link href="/auth/login" className="btn btn-primary btn-sm">Login / Register</Link>
               </div>
             </div>
           )}
-
-          {!isAuthenticated() && (
-            <div className="mobile-auth-buttons">
-              <Link href="/auth/login" className="btn btn-ghost btn-block">Login</Link>
-              <Link href="/auth/register" className="btn btn-primary btn-block">Register</Link>
-            </div>
-          )}
+          <button className="drawer-close-btn" onClick={() => setDrawerOpen(false)} aria-label="Close">
+            <FiX size={20} />
+          </button>
         </div>
+
+        <nav className="drawer-nav">
+          <Link href="/" className="drawer-nav-link">
+            <span>Home</span><FiChevronRight size={15} />
+          </Link>
+          <Link href="/categories" className="drawer-nav-link">
+            <span>Categories</span><FiChevronRight size={15} />
+          </Link>
+          <Link href="/products" className="drawer-nav-link">
+            <span>All Products</span><FiChevronRight size={15} />
+          </Link>
+          {isAuthenticated() && (
+            <>
+              <Link href="/orders" className="drawer-nav-link">
+                <span>My Orders</span><FiChevronRight size={15} />
+              </Link>
+              <Link href="/profile" className="drawer-nav-link">
+                <span>My Profile</span><FiChevronRight size={15} />
+              </Link>
+              <Link href="/cart" className="drawer-nav-link">
+                <span>My Cart{cartCount > 0 ? ` (${cartCount})` : ''}</span><FiChevronRight size={15} />
+              </Link>
+            </>
+          )}
+          {isAdmin() && (
+            <Link href="/admin/dashboard" className="drawer-nav-link drawer-admin-link">
+              <span><FiSettings size={14} style={{ marginRight: 6 }} />Admin Panel</span>
+              <FiChevronRight size={15} />
+            </Link>
+          )}
+        </nav>
+
+        {categories.length > 0 && (
+          <div className="drawer-categories">
+            <p className="drawer-section-title">Shop by Category</p>
+            {categories.map(cat => (
+              <Link key={cat.id} href={`/products?category=${cat.id}`} className="drawer-nav-link">
+                <span>
+                  {cat.icon && <span className="drawer-cat-icon">{cat.icon}</span>}
+                  {cat.name}
+                </span>
+                <FiChevronRight size={15} />
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {isAuthenticated() && (
+          <button onClick={handleLogout} className="drawer-logout-btn">
+            <FiLogOut size={15} /> Logout
+          </button>
+        )}
       </div>
-    </header>
+    </>
   );
 };
 

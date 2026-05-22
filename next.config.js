@@ -59,6 +59,15 @@ const nextConfig = {
     domains: ['res.cloudinary.com', 'images.unsplash.com', 'localhost'],
     unoptimized: false,
   },
+  async rewrites() {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080/api';
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/:path*`,
+      },
+    ];
+  },
 };
 
 module.exports = withPWA(nextConfig);

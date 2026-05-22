@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
+import BottomNav from '../components/BottomNav';
 import TawkTo from '../components/TawkTo';
 import PWAInstallBanner from '../components/PWAInstallBanner';
 
@@ -21,7 +21,7 @@ function MyApp({ Component, pageProps }) {
       <main className="main-content">
         {page}
       </main>
-      <Footer />
+      <BottomNav />
     </>
   ));
 

@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/backend/:path*",
+      "source": "/api/:path*",
       "destination": "https://srv1342889.hstgr.cloud/api/:path*"
     }
   ],
