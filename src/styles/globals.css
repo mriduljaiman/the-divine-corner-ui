@@ -329,7 +329,7 @@ h6 { font-size: 1rem; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 72px;
+  height: 88px;
   gap: var(--spacing-lg);
 }
 
@@ -341,7 +341,7 @@ h6 { font-size: 1rem; }
 }
 
 .logo-img {
-  height: 54px;
+  height: 72px;
   width: auto;
   object-fit: contain;
   display: block;
