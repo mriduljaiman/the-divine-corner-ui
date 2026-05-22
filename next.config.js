@@ -60,6 +60,8 @@ const nextConfig = {
     unoptimized: false,
   },
   async rewrites() {
+    // On Vercel, vercel.json handles the /api rewrite to the production backend
+    if (process.env.VERCEL) return [];
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080/api';
     return [
       {
