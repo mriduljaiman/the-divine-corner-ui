@@ -7,6 +7,8 @@ import Footer from '../components/Footer';
 import TawkTo from '../components/TawkTo';
 import PWAInstallBanner from '../components/PWAInstallBanner';
 
+const SplashScreen = dynamic(() => import('../components/SplashScreen'), { ssr: false });
+
 const Toaster = dynamic(
   () => import('react-hot-toast').then((mod) => mod.Toaster),
   { ssr: false }
@@ -27,6 +29,7 @@ function MyApp({ Component, pageProps }) {
     <AuthProvider>
       <CartProvider>
         {getLayout(<Component {...pageProps} />)}
+        <SplashScreen />
         <TawkTo />
         <PWAInstallBanner />
         <Toaster
