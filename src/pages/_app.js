@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import dynamic from 'next/dynamic';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import Header from '../components/Header';
@@ -26,6 +27,7 @@ function MyApp({ Component, pageProps }) {
   ));
 
   return (
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
     <AuthProvider>
       <CartProvider>
         {getLayout(<Component {...pageProps} />)}
@@ -60,6 +62,7 @@ function MyApp({ Component, pageProps }) {
         />
       </CartProvider>
     </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

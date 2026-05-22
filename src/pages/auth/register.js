@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import axios from '../../services/api';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -26,6 +27,19 @@ export default function RegisterPage() {
     if (e.target.name === 'email') {
       setOtpSent(false);
       setOtpSuccess('');
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(credentialResponse.credential);
+      router.push('/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google signup failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,6 +89,22 @@ export default function RegisterPage() {
         <h1>Register</h1>
         {error && <div className="error-message">{error}</div>}
         {otpSuccess && <div className="success-message">{otpSuccess}</div>}
+
+        <div className="google-btn-wrap">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('Google signup failed. Please try again.')}
+            width="100%"
+            text="signup_with"
+            shape="rectangular"
+            theme="outline"
+            size="large"
+          />
+        </div>
+
+        <div className="auth-divider">
+          <span>or register with email</span>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-row">
@@ -177,6 +207,26 @@ export default function RegisterPage() {
       </div>
 
       <style jsx>{`
+        .google-btn-wrap {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 16px;
+        }
+        .auth-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 16px 0;
+          color: #9ca3af;
+          font-size: 0.85rem;
+        }
+        .auth-divider::before,
+        .auth-divider::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: #e5e7eb;
+        }
         .email-otp-row {
           display: flex;
           gap: 8px;
