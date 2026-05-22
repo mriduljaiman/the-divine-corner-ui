@@ -121,8 +121,11 @@ const Header = () => {
         <div className="header-content">
           {/* Logo */}
           <Link href="/" className="logo">
-            <span className="logo-icon">✦</span>
-            <span className="logo-text">The Divine Corner</span>
+            <img
+              src="/logo_tagline.png"
+              alt="The Divine Corner"
+              className="logo-img"
+            />
           </Link>
 
           {/* Desktop Navigation */}

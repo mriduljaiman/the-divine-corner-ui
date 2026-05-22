@@ -1,11 +1,11 @@
 {
   "name": "The Divine Corner",
   "short_name": "Divine Corner",
-  "description": "Premium E-commerce Shopping Experience",
+  "description": "Har Occasion Har Zarurat, Sirf The Divine Corner. 100% Genuine Products.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "theme_color": "#3d1a6e",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",

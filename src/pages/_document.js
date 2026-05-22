@@ -11,8 +11,8 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Divine Corner" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#6366f1" />
-        <meta name="description" content="The Divine Corner - Premium E-commerce Shopping Experience" />
+        <meta name="theme-color" content="#3d1a6e" />
+        <meta name="description" content="The Divine Corner - Har Occasion Har Zarurat, Sirf The Divine Corner. 100% Genuine Products." />
 
         {/* Apple Touch Icons */}
         <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
@@ -27,14 +27,15 @@ export default function Document() {
         <link rel="shortcut icon" href="/favicon.ico" />
 
         {/* Microsoft Tiles */}
-        <meta name="msapplication-TileColor" content="#6366f1" />
+        <meta name="msapplication-TileColor" content="#3d1a6e" />
         <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
 
         {/* Open Graph / Social */}
         <meta property="og:type" content="website" />
         <meta property="og:title" content="The Divine Corner" />
-        <meta property="og:description" content="Premium E-commerce Shopping Experience" />
+        <meta property="og:description" content="Har Occasion Har Zarurat, Sirf The Divine Corner. 100% Genuine Products." />
+        <meta property="og:image" content="/logo_tagline.png" />
         <meta property="og:site_name" content="The Divine Corner" />
 
         {/* Preconnect for performance */}
