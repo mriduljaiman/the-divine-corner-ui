@@ -342,8 +342,9 @@ export default function NewProduct() {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Color</label>
+                <label htmlFor="new-color">Color</label>
                 <input
+                  id="new-color"
                   type="text"
                   name="color"
                   value={formData.color}
@@ -353,8 +354,9 @@ export default function NewProduct() {
               </div>
 
               <div className="form-group">
-                <label>Variant Group ID</label>
+                <label htmlFor="new-variantGroupId">Variant Group ID</label>
                 <input
+                  id="new-variantGroupId"
                   type="text"
                   name="variantGroupId"
                   value={formData.variantGroupId}
