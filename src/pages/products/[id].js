@@ -21,6 +21,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState('');
   const [activeImage, setActiveImage] = useState(0);
   const [imageError, setImageError] = useState({});
 
@@ -49,6 +50,10 @@ export default function ProductDetail() {
     }
     if (product.stockQuantity === 0) {
       showToast.error('This product is out of stock');
+      return;
+    }
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      showToast.error('Please select a size');
       return;
     }
     try {
@@ -170,8 +175,8 @@ export default function ProductDetail() {
               <p className="pd-brand">Brand: <strong>{product.brand}</strong></p>
             )}
 
-            {/* Color Variants */}
-            {(product.color || (product.variants && product.variants.length > 0)) && (
+            {/* Color Variants — only when color is explicitly set and siblings exist */}
+            {product.color && product.variants && product.variants.length > 0 && (
               <div className="pd-variants">
                 <p className="pd-variants-label">
                   Color: <strong>{product.color || 'Default'}</strong>
@@ -227,6 +232,25 @@ export default function ProductDetail() {
                 <><FiPackage size={14} /> Out of Stock</>
               )}
             </div>
+
+            {/* Size Selector */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div className="pd-size-wrap">
+                <label className="pd-size-label">Size</label>
+                <div className="pd-size-options">
+                  {product.sizes.map(size => (
+                    <button
+                      key={size}
+                      type="button"
+                      className={`pd-size-btn ${selectedSize === size ? 'active' : ''}`}
+                      onClick={() => setSelectedSize(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quantity */}
             {inStock && (
@@ -417,6 +441,25 @@ export default function ProductDetail() {
         }
         .pd-stock.in-stock { background: #f0fdf4; color: var(--success-dark); }
         .pd-stock.out-of-stock { background: #fef2f2; color: var(--danger); }
+
+        .pd-size-wrap { margin-bottom: 1.25rem; }
+        .pd-size-label {
+          display: block; font-size: 0.85rem; font-weight: 600;
+          color: var(--gray-700); margin-bottom: 0.5rem;
+        }
+        .pd-size-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .pd-size-btn {
+          min-width: 44px; padding: 6px 12px;
+          border: 1.5px solid var(--gray-300);
+          border-radius: var(--radius); background: #fff;
+          font-size: 0.85rem; font-weight: 500; cursor: pointer;
+          transition: all 0.15s;
+        }
+        .pd-size-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .pd-size-btn.active {
+          border-color: var(--primary); background: var(--primary);
+          color: #fff; font-weight: 600;
+        }
 
         .pd-quantity { margin-bottom: 1.5rem; }
         .pd-quantity label {

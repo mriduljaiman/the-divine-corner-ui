@@ -25,6 +25,7 @@ export default function NewProduct() {
     brand: '',
     color: '',
     variantGroupId: '',
+    sizes: [],
     featured: false,
     images: []
   });
@@ -367,6 +368,37 @@ export default function NewProduct() {
                   Give all color variants the same group ID (e.g., <em>floral-kurti-001</em>)
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Sizes */}
+          <div className="form-section" style={{ background: 'var(--white)', padding: 'var(--spacing-xl)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--spacing-lg)', boxShadow: 'var(--shadow-sm)' }}>
+            <h3 style={{ marginBottom: '0.5rem', color: 'var(--gray-800)' }}>Size Options</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: '1rem' }}>
+              Select available sizes — only selected sizes will show to customers.
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(size => (
+                <label key={size} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
+                  padding: '6px 14px', border: `1.5px solid ${formData.sizes.includes(size) ? 'var(--primary)' : 'var(--gray-300)'}`,
+                  borderRadius: 'var(--radius)', background: formData.sizes.includes(size) ? 'var(--primary)' : '#fff',
+                  color: formData.sizes.includes(size) ? '#fff' : 'var(--gray-700)', fontWeight: 500, fontSize: '0.875rem',
+                  transition: 'all 0.15s'
+                }}>
+                  <input
+                    type="checkbox"
+                    style={{ display: 'none' }}
+                    checked={formData.sizes.includes(size)}
+                    onChange={() => setFormData(prev => ({
+                      ...prev,
+                      sizes: prev.sizes.includes(size)
+                        ? prev.sizes.filter(s => s !== size)
+                        : [...prev.sizes, size]
+                    }))}
+                  />
+                  {size}
+                </label>
+              ))}
             </div>
           </div>
 
