@@ -325,9 +325,11 @@ export default function ProductDetail() {
           overflow: hidden;
           background: #fff;
           border: 1px solid var(--gray-200);
+          padding: 8px;
+          box-sizing: border-box;
         }
         .pd-main-image img {
-          width: 100%; height: 100%; object-fit: contain;
+          width: 100%; height: 100%; object-fit: contain; display: block;
         }
         .pd-no-image {
           width: 100%; height: 100%;

@@ -3242,12 +3242,15 @@ h6 { font-size: 1rem; }
   aspect-ratio: 3 / 4;
   background: #fff;
   overflow: hidden;
+  padding: 6px;
+  box-sizing: border-box;
 }
 
 .meesho-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;
   transition: transform 0.3s ease;
 }
 
