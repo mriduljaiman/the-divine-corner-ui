@@ -53,9 +53,11 @@ api.interceptors.response.use(
 
     const skipRefresh =
       requestUrl.includes('/auth/') ||
-      requestUrl.includes('/users/profile');
+      requestUrl.includes('/users/profile') ||
+      requestUrl.includes('/products') ||
+      requestUrl.includes('/categories');
 
-    if ((status === 401 || status === 403) && !originalRequest._retry && !skipRefresh) {
+    if (status === 401 && !originalRequest._retry && !skipRefresh) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

@@ -25,7 +25,7 @@ export default function LoginPage() {
       router.push('/');
     } catch (err) {
       if (!err.response) {
-        setError('Server se connect nahi ho paya. Internet check karo ya thodi der baad try karo.');
+        setError('Unable to connect to server. Please check your internet connection and try again.');
       } else {
         setError(err.response?.data?.message || 'Invalid email or password');
       }
