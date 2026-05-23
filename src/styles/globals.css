@@ -3240,7 +3240,7 @@ h6 { font-size: 1rem; }
 .meesho-img-wrap {
   position: relative;
   aspect-ratio: 3 / 4;
-  background: var(--gray-100);
+  background: #fff;
   overflow: hidden;
 }
 

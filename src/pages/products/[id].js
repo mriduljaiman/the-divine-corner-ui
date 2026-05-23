@@ -323,7 +323,7 @@ export default function ProductDetail() {
           aspect-ratio: 1;
           border-radius: var(--radius-lg);
           overflow: hidden;
-          background: var(--gray-100);
+          background: #fff;
           border: 1px solid var(--gray-200);
         }
         .pd-main-image img {
