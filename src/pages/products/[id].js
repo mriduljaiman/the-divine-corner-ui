@@ -327,7 +327,7 @@ export default function ProductDetail() {
           border: 1px solid var(--gray-200);
         }
         .pd-main-image img {
-          width: 100%; height: 100%; object-fit: cover;
+          width: 100%; height: 100%; object-fit: contain;
         }
         .pd-no-image {
           width: 100%; height: 100%;
@@ -356,7 +356,7 @@ export default function ProductDetail() {
           padding: 0;
         }
         .pd-thumb.active { border-color: var(--primary); }
-        .pd-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .pd-thumb img { width: 100%; height: 100%; object-fit: contain; }
         .pd-thumb-placeholder {
           width: 100%; height: 100%;
           display: flex; align-items: center; justify-content: center;
