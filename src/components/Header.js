@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import { categoryService } from '../services/categoryService';
 import {
   FiMenu, FiX, FiShoppingCart, FiUser, FiLogOut,
-  FiPackage, FiSettings, FiSearch, FiHeart, FiChevronRight,
+  FiSettings, FiSearch, FiChevronRight, FiMessageCircle,
 } from 'react-icons/fi';
 
 const Header = () => {
@@ -70,8 +70,12 @@ const Header = () => {
           </Link>
 
           <div className="app-header-icons">
-            <button className="app-icon-btn" aria-label="Wishlist">
-              <FiHeart size={21} />
+            <button
+              className="app-icon-btn"
+              aria-label="Chat support"
+              onClick={() => globalThis.__openTawkChat?.()}
+            >
+              <FiMessageCircle size={21} />
             </button>
             <Link href="/cart" className="app-icon-btn app-cart-btn" aria-label="Cart">
               <FiShoppingCart size={21} />

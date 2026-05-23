@@ -1,127 +1,149 @@
-// ============ pages/orders/index.js ============
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
+import { cloudinaryPad } from '../../utils/cloudinary';
+import { FiChevronRight } from 'react-icons/fi';
+
+const STATUS_META = {
+  DELIVERED:  { label: 'Delivered',   color: '#16a34a', bg: '#f0fdf4' },
+  SHIPPED:    { label: 'Shipped',      color: '#2563eb', bg: '#eff6ff' },
+  PROCESSING: { label: 'Processing',  color: '#d97706', bg: '#fffbeb' },
+  CONFIRMED:  { label: 'Confirmed',   color: '#2563eb', bg: '#eff6ff' },
+  PENDING:    { label: 'Order Placed', color: '#6b7280', bg: '#f9fafb' },
+  CANCELLED:  { label: 'Cancelled',   color: '#dc2626', bg: '#fef2f2' },
+};
+
+function fmt(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 export default function OrdersPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({});
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/auth/login');
-      return;
-    }
-    fetchOrders();
-  }, []);
+    if (authLoading) return;
+    if (!isAuthenticated()) { router.push('/auth/login'); return; }
+    orderService.getMyOrders(0, 50)
+      .then(r => setOrders(r.data.content || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [authLoading]);
 
-  const fetchOrders = async (page = 0) => {
-    try {
-      setLoading(true);
-      const response = await orderService.getMyOrders(page);
-      setOrders(response.data.content);
-      setPagination({
-        page: response.data.page,
-        totalPages: response.data.totalPages
-      });
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filtered = search.trim()
+    ? orders.filter(o =>
+        o.orderNumber?.toLowerCase().includes(search.toLowerCase()) ||
+        o.items?.some(i => i.productName?.toLowerCase().includes(search.toLowerCase()))
+      )
+    : orders;
 
-  const getStatusClass = (status) => {
-    const statusMap = {
-      PENDING: 'status-pending',
-      CONFIRMED: 'status-confirmed',
-      PROCESSING: 'status-processing',
-      SHIPPED: 'status-shipped',
-      DELIVERED: 'status-delivered',
-      CANCELLED: 'status-cancelled'
-    };
-    return statusMap[status] || '';
-  };
-
-  if (loading) return <div className="loading">Loading orders...</div>;
+  if (loading) return <div className="ord-loading">Loading orders…</div>;
 
   return (
-    <div className="orders-page">
-      <div className="container">
-        <h1>My Orders</h1>
-
-        {orders.length === 0 ? (
-          <div className="no-orders">
-            <p>You haven't placed any orders yet</p>
-            <Link href="/products" className="btn btn-primary">
-              Start Shopping
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className="orders-list">
-              {orders.map(order => (
-                <div key={order.id} className="order-card">
-                  <div className="order-header">
-                    <div>
-                      <h3>Order #{order.orderNumber}</h3>
-                      <p>{order.createdAt}</p>
-                    </div>
-                    <span className={`status ${getStatusClass(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </div>
-
-                  <div className="order-items">
-                    {order.items.map(item => (
-                      <div key={item.id} className="order-item">
-                        <img src={item.productImage || '/placeholder.png'} alt={item.productName} />
-                        <div>
-                          <p>{item.productName}</p>
-                          <span>Qty: {item.quantity}</span>
-                        </div>
-                        <span className="item-price">₹{item.subtotal.toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="order-footer">
-                    <div className="order-total">
-                      Total: ₹{order.totalAmount.toFixed(2)}
-                    </div>
-                    <Link href={`/orders/${order.id}`} className="btn btn-secondary">
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {pagination.totalPages > 1 && (
-              <div className="pagination">
-                <button
-                  disabled={pagination.page === 0}
-                  onClick={() => fetchOrders(pagination.page - 1)}
-                >
-                  Previous
-                </button>
-                <span>Page {pagination.page + 1} of {pagination.totalPages}</span>
-                <button
-                  disabled={pagination.page === pagination.totalPages - 1}
-                  onClick={() => fetchOrders(pagination.page + 1)}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
+    <div className="ord-page">
+      <div className="ord-header-bar">
+        <h1 className="ord-title">MY ORDERS</h1>
       </div>
+
+      <div className="ord-search-wrap">
+        <input
+          className="ord-search"
+          type="text"
+          placeholder="Search orders"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="ord-empty">
+          <p>{search ? 'No orders match your search.' : "You haven't placed any orders yet."}</p>
+        </div>
+      ) : (
+        <div className="ord-list">
+          {filtered.map(order => {
+            const first = order.items?.[0];
+            const totalQty = order.items?.reduce((s, i) => s + i.quantity, 0) || 0;
+            const meta = STATUS_META[order.status] || STATUS_META.PENDING;
+            return (
+              <div
+                key={order.id}
+                className="ord-row"
+                onClick={() => router.push(`/orders/${order.id}`)}
+              >
+                <div className="ord-thumb-wrap">
+                  {first?.productImage ? (
+                    <img
+                      src={cloudinaryPad(first.productImage, 160, 213)}
+                      alt={first.productName}
+                      className="ord-thumb"
+                    />
+                  ) : (
+                    <div className="ord-thumb-placeholder" />
+                  )}
+                </div>
+
+                <div className="ord-row-info">
+                  <p className="ord-status-text" style={{ color: meta.color }}>
+                    {meta.label}
+                  </p>
+                  <p className="ord-date">{fmt(order.createdAt)}</p>
+                  <p className="ord-name">{first?.productName || 'Order'}</p>
+                  <p className="ord-qty">Qty: {totalQty}</p>
+                </div>
+
+                <FiChevronRight size={18} className="ord-chevron" />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <style jsx>{`
+        .ord-page { background: #f3f4f6; min-height: 100vh; }
+        .ord-header-bar { background: #fff; padding: 14px 16px 10px; border-bottom: 1px solid #e5e7eb; }
+        .ord-title { font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em; color: #111; margin: 0; }
+        .ord-search-wrap { padding: 12px 16px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+        .ord-search {
+          width: 100%; box-sizing: border-box;
+          padding: 8px 14px; border-radius: 20px;
+          border: 1.5px solid #e5e7eb; background: #f9fafb;
+          font-size: 0.9rem; outline: none;
+        }
+        .ord-search:focus { border-color: #6366f1; }
+        .ord-list { display: flex; flex-direction: column; }
+        .ord-row {
+          display: flex; align-items: center; gap: 14px;
+          background: #fff; padding: 14px 16px;
+          border-bottom: 1px solid #f3f4f6;
+          cursor: pointer; transition: background 0.15s;
+        }
+        .ord-row:active { background: #f9fafb; }
+        .ord-thumb-wrap {
+          flex-shrink: 0; width: 68px; height: 90px;
+          border-radius: 6px; overflow: hidden;
+          background: #f3f4f6; border: 1px solid #e5e7eb;
+        }
+        .ord-thumb { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .ord-thumb-placeholder { width: 100%; height: 100%; background: #e5e7eb; }
+        .ord-row-info { flex: 1; min-width: 0; }
+        .ord-status-text { font-size: 0.9rem; font-weight: 700; margin: 0 0 2px; }
+        .ord-date { font-size: 0.75rem; color: #6b7280; margin: 0 0 5px; }
+        .ord-name {
+          font-size: 0.82rem; color: #374151; margin: 0 0 2px;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .ord-qty { font-size: 0.78rem; color: #9ca3af; margin: 0; }
+        .ord-chevron { color: #9ca3af; flex-shrink: 0; }
+        .ord-empty { padding: 48px 24px; text-align: center; color: #6b7280; }
+        .ord-loading { padding: 48px 24px; text-align: center; color: #6b7280; }
+      `}</style>
     </div>
   );
 }

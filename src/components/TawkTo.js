@@ -7,6 +7,12 @@ export default function TawkTo() {
     globalThis.Tawk_API = globalThis.Tawk_API || {};
     globalThis.Tawk_LoadStart = new Date();
 
+    // Hide the floating widget once loaded; expose openChat for Header button
+    globalThis.Tawk_API.onLoad = function () {
+      globalThis.Tawk_API.hideWidget();
+      globalThis.__openTawkChat = () => globalThis.Tawk_API.maximize();
+    };
+
     const s1 = document.createElement('script');
     const s0 = document.getElementsByTagName('script')[0];
     s1.async = true;
