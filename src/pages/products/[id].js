@@ -227,7 +227,7 @@ export default function ProductDetail() {
             {/* Stock */}
             <div className={`pd-stock ${inStock ? 'in-stock' : 'out-of-stock'}`}>
               {inStock ? (
-                <><FiCheck size={14} /> In Stock ({product.stockQuantity} available)</>
+                <><FiCheck size={14} /> In Stock</>
               ) : (
                 <><FiPackage size={14} /> Out of Stock</>
               )}
