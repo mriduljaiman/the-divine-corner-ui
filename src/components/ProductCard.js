@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { showToast } from '../utils/toast';
 import { FiHeart, FiLoader } from 'react-icons/fi';
+import { cloudinaryPad } from '../utils/cloudinary';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
@@ -34,7 +35,9 @@ const ProductCard = ({ product }) => {
     ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
     : 0;
 
-  const imageUrl = product.images && product.images.length > 0 ? product.images[0] : null;
+  const imageUrl = product.images && product.images.length > 0
+    ? cloudinaryPad(product.images[0])
+    : null;
 
   return (
     <div className="meesho-card">

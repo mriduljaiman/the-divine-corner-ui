@@ -5,6 +5,7 @@ import { productService } from '../../services/productService';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toast';
+import { cloudinaryPad } from '../../utils/cloudinary';
 import {
   FiShoppingCart, FiArrowLeft, FiStar, FiPackage,
   FiTag, FiLoader, FiImage, FiCheck, FiMinus, FiPlus
@@ -115,7 +116,7 @@ export default function ProductDetail() {
             <div className="pd-main-image">
               {images.length > 0 && !imageError[activeImage] ? (
                 <img
-                  src={images[activeImage]}
+                  src={cloudinaryPad(images[activeImage])}
                   alt={product.name}
                   onError={() => setImageError(prev => ({ ...prev, [activeImage]: true }))}
                 />
@@ -145,7 +146,7 @@ export default function ProductDetail() {
                     onClick={() => setActiveImage(i)}
                   >
                     {!imageError[i] ? (
-                      <img src={img} alt={`${product.name} ${i + 1}`} onError={() => setImageError(prev => ({ ...prev, [i]: true }))} />
+                      <img src={cloudinaryPad(img, 200, 267)} alt={`${product.name} ${i + 1}`} onError={() => setImageError(prev => ({ ...prev, [i]: true }))} />
                     ) : (
                       <div className="pd-thumb-placeholder"><FiImage /></div>
                     )}
