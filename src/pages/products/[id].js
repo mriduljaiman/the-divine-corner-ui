@@ -26,19 +26,38 @@ export default function ProductDetail() {
   const [imageError, setImageError] = useState({});
 
   useEffect(() => {
-    if (id) fetchProduct();
+    if (id) fetchProduct(id);
   }, [id]);
 
-  const fetchProduct = async () => {
+  const fetchProduct = async (productId) => {
     try {
       setLoading(true);
-      const res = await productService.getProductById(id);
+      const res = await productService.getProductById(productId);
       setProduct(res.data);
+      setActiveImage(0);
+      setQuantity(1);
+      setSelectedSize('');
+      setImageError({});
     } catch {
       showToast.error('Product not found');
       router.push('/products');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVariantSelect = async (variantId) => {
+    if (variantId === product?.id?.toString()) return;
+    try {
+      const res = await productService.getProductById(variantId);
+      setProduct(res.data);
+      setActiveImage(0);
+      setQuantity(1);
+      setSelectedSize('');
+      setImageError({});
+      router.replace(`/products/${variantId}`, undefined, { shallow: true });
+    } catch {
+      router.push(`/products/${variantId}`);
     }
   };
 
@@ -175,31 +194,47 @@ export default function ProductDetail() {
               <p className="pd-brand">Brand: <strong>{product.brand}</strong></p>
             )}
 
-            {/* Color Variants — only when color is explicitly set and siblings exist */}
+            {/* Color Variants — image cards, selectable without page reload */}
             {product.color && product.variants && product.variants.length > 0 && (
               <div className="pd-variants">
                 <p className="pd-variants-label">
-                  Color: <strong>{product.color || 'Default'}</strong>
+                  Colour: <strong>{product.color}</strong>
                 </p>
-                <div className="pd-variants-swatches">
-                  {/* Current product swatch */}
-                  <div className="pd-swatch pd-swatch-active" title={product.color || 'Current'}>
-                    {product.images?.[0] ? (
-                      <img src={product.images[0]} alt={product.color || 'Current'} />
-                    ) : (
-                      <div className="pd-swatch-dot" style={{ background: product.color?.toLowerCase() || '#ccc' }} />
+                <div className="pd-variant-cards">
+                  {/* Current product card — always selected */}
+                  <div className="pd-variant-card pd-variant-card-active">
+                    <div className="pd-variant-card-img">
+                      <img src={cloudinaryPad(product.images?.[0], 200, 200)} alt={product.color} />
+                    </div>
+                    <p className="pd-variant-price">
+                      ₹{Number(product.discountPrice || product.price).toLocaleString('en-IN')}
+                    </p>
+                    {product.discountPrice && (
+                      <p className="pd-variant-mrp">
+                        ₹{Number(product.price).toLocaleString('en-IN')}
+                      </p>
                     )}
-                    <span className="pd-swatch-check">✓</span>
                   </div>
                   {/* Other variants */}
-                  {product.variants?.map(v => (
-                    <Link key={v.id} href={`/products/${v.id}`} className="pd-swatch" title={v.color || ''}>
-                      {v.thumbnail ? (
-                        <img src={v.thumbnail} alt={v.color || ''} />
-                      ) : (
-                        <div className="pd-swatch-dot" style={{ background: v.color?.toLowerCase() || '#ccc' }} />
+                  {product.variants.map(v => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      className="pd-variant-card"
+                      onClick={() => handleVariantSelect(String(v.id))}
+                    >
+                      <div className="pd-variant-card-img">
+                        <img src={cloudinaryPad(v.thumbnail, 200, 200)} alt={v.color || ''} />
+                      </div>
+                      <p className="pd-variant-price">
+                        ₹{Number(v.discountPrice || v.price).toLocaleString('en-IN')}
+                      </p>
+                      {v.discountPrice && (
+                        <p className="pd-variant-mrp">
+                          ₹{Number(v.price).toLocaleString('en-IN')}
+                        </p>
                       )}
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -531,29 +566,37 @@ export default function ProductDetail() {
         .pd-variants { margin-bottom: 1.25rem; }
         .pd-variants-label {
           font-size: 0.875rem; color: var(--gray-600);
-          margin-bottom: 0.625rem;
+          margin-bottom: 0.75rem;
         }
-        .pd-variants-swatches { display: flex; gap: 0.625rem; flex-wrap: wrap; }
-        .pd-swatch {
-          position: relative;
-          width: 56px; height: 56px;
-          border-radius: var(--radius);
-          overflow: hidden;
+        .pd-variant-cards { display: flex; gap: 10px; flex-wrap: wrap; }
+        .pd-variant-card {
+          width: 108px;
           border: 2px solid var(--gray-200);
+          border-radius: var(--radius-lg);
+          overflow: hidden;
           cursor: pointer;
-          transition: border-color 0.2s, transform 0.15s;
-          background: var(--gray-100);
-          display: flex; align-items: center; justify-content: center;
-          text-decoration: none;
+          background: #fff;
+          padding: 0;
+          text-align: center;
+          transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .pd-swatch:hover { border-color: var(--primary); transform: scale(1.05); }
-        .pd-swatch-active { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
-        .pd-swatch img { width: 100%; height: 100%; object-fit: cover; }
-        .pd-swatch-dot { width: 28px; height: 28px; border-radius: 50%; }
-        .pd-swatch-check {
-          position: absolute; bottom: 2px; right: 3px;
-          font-size: 10px; font-weight: 700;
-          color: var(--primary); line-height: 1;
+        .pd-variant-card:hover { border-color: var(--primary); }
+        .pd-variant-card-active {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 2px var(--primary);
+        }
+        .pd-variant-card-img {
+          width: 100%; aspect-ratio: 1;
+          overflow: hidden; background: #f8f8f8;
+        }
+        .pd-variant-card-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .pd-variant-price {
+          font-size: 0.8rem; font-weight: 700; color: #111;
+          margin: 5px 4px 1px; line-height: 1.2;
+        }
+        .pd-variant-mrp {
+          font-size: 0.72rem; color: var(--gray-400);
+          text-decoration: line-through; margin: 0 4px 6px;
         }
 
         .pd-back { margin-top: 2rem; }
