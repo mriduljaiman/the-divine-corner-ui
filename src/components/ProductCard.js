@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { useCart } from '../context/CartContext';
 import { showToast } from '../utils/toast';
 import { FiHeart, FiLoader } from 'react-icons/fi';
 import { cloudinaryPad } from '../utils/cloudinary';
 
 const ProductCard = ({ product }) => {
+  const router = useRouter();
   const { addToCart } = useCart();
   const [adding, setAdding] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -16,6 +18,11 @@ const ProductCard = ({ product }) => {
     e.stopPropagation();
     if (product.stockQuantity === 0) {
       showToast.error('This product is out of stock');
+      return;
+    }
+    // Size has to be picked on the product page
+    if (product.sizes && product.sizes.length > 0) {
+      router.push(`/products/${product.id}`);
       return;
     }
     try {

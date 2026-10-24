@@ -28,6 +28,7 @@ export const productService = {
 
   getFeaturedProducts: () => api.get('/products/featured'),
   getProductById: (id) => api.get(`/products/${id}`),
+  getProductBySku: (sku) => api.get(`/products/sku/${encodeURIComponent(sku)}`),
   createProduct: (data) => api.post('/products', data),
   updateProduct: (id, data) => api.put(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),

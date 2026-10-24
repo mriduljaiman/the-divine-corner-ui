@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
+import { getRedirectTarget } from '../../utils/redirect';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,7 +14,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -22,7 +24,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(formData);
-      router.push('/');
+      router.push(getRedirectTarget(router.query));
     } catch (err) {
       if (!err.response) {
         setError('Unable to connect to server. Please check your internet connection and try again.');
@@ -39,7 +41,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await googleLogin(credentialResponse.credential);
-      router.push('/');
+      router.push(getRedirectTarget(router.query));
     } catch (err) {
       setError(err.response?.data?.message || 'Google login failed. Please try again.');
     } finally {
@@ -117,7 +119,7 @@ export default function LoginPage() {
         </form>
 
         <p className="auth-link">
-          Don&apos;t have an account? <Link href="/auth/register">Register</Link>
+          Don&apos;t have an account? <Link href={router.query.redirect ? `/auth/register?redirect=${encodeURIComponent(getRedirectTarget(router.query))}` : '/auth/register'}>Register</Link>
         </p>
       </div>
 

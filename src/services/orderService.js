@@ -5,7 +5,9 @@ export const orderService = {
   createOrder: (data) => api.post('/orders', data),
   getMyOrders: (page = 0, size = 10) => api.get(`/orders?page=${page}&size=${size}`),
   getOrderById: (id) => api.get(`/orders/${id}`),
-  getAllOrders: (page = 0, size = 10) => api.get(`/admin/orders?page=${page}&size=${size}`),
+  cancelOrder: (id) => api.post(`/orders/${id}/cancel`),
+  getAllOrders: (page = 0, size = 10, status = '') =>
+    api.get(`/admin/orders?page=${page}&size=${size}${status ? `&status=${status}` : ''}`),
   getOrderByIdAdmin: (id) => api.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
 };

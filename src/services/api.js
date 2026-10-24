@@ -51,11 +51,10 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const requestUrl = originalRequest?.url || '';
 
-    const skipRefresh =
-      requestUrl.includes('/auth/') ||
-      requestUrl.includes('/users/profile') ||
-      requestUrl.includes('/products') ||
-      requestUrl.includes('/categories');
+    // Only try a refresh when we actually have a refresh token (guests have none)
+    const skipRefresh = requestUrl.includes('/auth/') || !tokenStore.getRefresh();
+    // The startup profile check must not bounce guests to the login page
+    const isSessionCheck = requestUrl.includes('/users/profile');
 
     if (status === 401 && !originalRequest._retry && !skipRefresh) {
       if (isRefreshing) {
@@ -78,8 +77,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError);
         tokenStore.clear();
-        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
-          window.location.href = '/auth/login';
+        if (!isSessionCheck && typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
+          const back = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/auth/login?redirect=${back}`;
         }
         return Promise.reject(refreshError);
       } finally {

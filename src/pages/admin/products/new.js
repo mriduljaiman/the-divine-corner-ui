@@ -6,6 +6,7 @@ import { categoryService } from '../../../services/categoryService';
 import ImageUpload from '../../../components/ImageUpload';
 import { showToast } from '../../../utils/toast';
 import { FiPlus, FiSave, FiX, FiStar } from 'react-icons/fi';
+import { adminLayout } from '../../../components/admin/AdminLayout';
 
 export default function NewProduct() {
   const router = useRouter();
@@ -54,44 +55,53 @@ export default function NewProduct() {
     const cat = categories.find(c => String(c.id) === String(categoryId));
     if (!cat) return;
     const prefix = cat.skuPrefix || cat.name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+    let next = 1;
     try {
       const res = await productService.searchProducts({ categoryId, size: 1, page: 0 });
-      const count = res.data.totalElements || 0;
-      const num = String(count + 1).padStart(3, '0');
-      setFormData(prev => ({ ...prev, sku: `${prefix}-${num}` }));
-    } catch {
-      setFormData(prev => ({ ...prev, sku: `${prefix}-001` }));
+      next = (res.data.totalElements || 0) + 1;
+    } catch { /* start from 001 */ }
+    // Deleted products keep their SKU, so make sure the candidate is actually free
+    for (let i = 0; i < 50; i++, next++) {
+      const candidate = `${prefix}-${String(next).padStart(3, '0')}`;
+      try {
+        await productService.getProductBySku(candidate);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setFormData(prev => ({ ...prev, sku: candidate }));
+          return;
+        }
+        break;
+      }
     }
+    setFormData(prev => ({ ...prev, sku: '' })); // backend will generate a unique one
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const updated = { ...formData, [name]: type === 'checkbox' ? checked : value };
-    setFormData(updated);
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     if (name === 'categoryId' && value) generateSku(value);
   };
 
   const handleImageUploadComplete = (results) => {
     const newUrls = results.map(r => r.url);
-    setFormData({
-      ...formData,
-      images: [...formData.images, ...newUrls]
-    });
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...newUrls]
+    }));
     showToast.success(`${results.length} image(s) uploaded successfully`);
   };
 
   const handleRemoveImage = (index) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    setFormData({ ...formData, images: newImages });
+    setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
   };
 
   const handleAddImageUrl = () => {
     const url = prompt('Enter image URL:');
     if (url && url.trim()) {
-      setFormData({
-        ...formData,
-        images: [...formData.images, url.trim()]
-      });
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, url.trim()]
+      }));
     }
   };
 
@@ -378,7 +388,7 @@ export default function NewProduct() {
               Select available sizes — only selected sizes will show to customers.
             </p>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map(size => (
+              {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '0', '1', '2', '3', '4', '5', '6', '7'].map(size => (
                 <label key={size} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
                   padding: '6px 14px', border: `1.5px solid ${formData.sizes.includes(size) ? 'var(--primary)' : 'var(--gray-300)'}`,
                   borderRadius: 'var(--radius)', background: formData.sizes.includes(size) ? 'var(--primary)' : '#fff',
@@ -446,3 +456,5 @@ export default function NewProduct() {
     </div>
   );
 }
+
+NewProduct.getLayout = adminLayout('Add Product');

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../../context/AuthContext';
 import styles from '../../../styles/Admin.module.css';
 import api from '../../../services/api';
+import { adminLayout } from '../../../components/admin/AdminLayout';
 
 export default function StockInHistory() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function StockInHistory() {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products/all');
+      const response = await api.get('/products?page=0&size=1000');
       setProducts(response.data.content || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -365,3 +366,5 @@ export default function StockInHistory() {
     </div>
   );
 }
+
+StockInHistory.getLayout = adminLayout('Purchase History');

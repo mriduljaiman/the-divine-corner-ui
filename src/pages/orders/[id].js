@@ -27,16 +27,30 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated()) { router.push('/auth/login'); return; }
+    if (!isAuthenticated()) { router.push(`/auth/login?redirect=${encodeURIComponent(router.asPath)}`); return; }
     if (!id) return;
     orderService.getOrderById(id)
       .then(r => setOrder(r.data))
       .catch(() => setError('Order not found.'))
       .finally(() => setLoading(false));
   }, [authLoading, id]);
+
+  const handleCancel = async () => {
+    if (!confirm('Cancel this order?')) return;
+    setCancelling(true);
+    try {
+      const r = await orderService.cancelOrder(order.id);
+      setOrder(r.data);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Could not cancel the order');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) return <div className="od-loading">Loading…</div>;
   if (error || !order) return (
@@ -73,7 +87,8 @@ export default function OrderDetailPage() {
             <div className="od-item-info">
               <p className="od-item-name">{item.productName}</p>
               <p className="od-item-meta">Order #{order.orderNumber}</p>
-              <p className="od-item-meta">{order.paymentMethod || 'Prepaid'}</p>
+              {item.size && <p className="od-item-meta">Size: {item.size}</p>}
+              <p className="od-item-meta">{order.paymentMethod === 'COD' ? 'Cash on Delivery' : (order.paymentMethod || 'Cash on Delivery')}</p>
               <p className="od-item-qty">Qty: {item.quantity}</p>
               <p className="od-item-price">₹{Number(item.subtotal).toLocaleString('en-IN')}</p>
             </div>
@@ -98,6 +113,11 @@ export default function OrderDetailPage() {
             )}
           </div>
         </div>
+        {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
+          <button className="od-cancel" onClick={handleCancel} disabled={cancelling}>
+            {cancelling ? 'Cancelling…' : 'Cancel Order'}
+          </button>
+        )}
       </div>
 
       {/* Delivery Address */}
@@ -158,6 +178,12 @@ export default function OrderDetailPage() {
         .od-price-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #374151; padding: 4px 0; }
         .od-discount { color: #16a34a; }
         .od-total { font-weight: 700; font-size: 0.95rem; color: #111; border-top: 1px solid #e5e7eb; margin-top: 6px; padding-top: 10px; }
+        .od-cancel {
+          margin-top: 12px; padding: 8px 16px; border-radius: 6px;
+          border: 1px solid #dc2626; background: #fff; color: #dc2626;
+          font-weight: 600; cursor: pointer;
+        }
+        .od-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
         .od-loading, .od-error { padding: 48px 24px; text-align: center; color: #6b7280; }
         .od-error { display: flex; flex-direction: column; align-items: center; gap: 12px; }
       `}</style>

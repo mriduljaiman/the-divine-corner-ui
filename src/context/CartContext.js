@@ -26,12 +26,29 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      fetchCart();
+      mergeGuestCartThenFetch();
     } else {
       setCart(null);
       setGuestItems(getGuestCart());
     }
   }, [isAuthenticated()]);
+
+  // Items added before login live in localStorage; move them into the server cart once
+  const mergeGuestCartThenFetch = async () => {
+    const pending = getGuestCart();
+    if (pending.length > 0) {
+      saveGuestCart([]);
+      setGuestItems([]);
+      for (const item of pending) {
+        try {
+          await cartService.addToCart(item.productId, item.quantity, item.size);
+        } catch (error) {
+          console.warn('Could not move guest cart item', item.productId, error.response?.data?.message);
+        }
+      }
+    }
+    await fetchCart();
+  };
 
   const fetchCart = async () => {
     try {
@@ -45,20 +62,21 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const addToCart = async (productId, quantity, productInfo) => {
+  const addToCart = async (productId, quantity, productInfo, size) => {
     if (!isAuthenticated()) {
       // Guest cart — store in localStorage
       const current = getGuestCart();
-      const existing = current.find(i => i.productId === productId);
+      const sameLine = (i) => i.productId === productId && (i.size || null) === (size || null);
+      const existing = current.find(sameLine);
       let updated;
       if (existing) {
         updated = current.map(i =>
-          i.productId === productId
+          sameLine(i)
             ? { ...i, quantity: i.quantity + quantity }
             : i
         );
       } else {
-        updated = [...current, { productId, quantity, ...(productInfo || {}) }];
+        updated = [...current, { productId, quantity, size: size || null, ...(productInfo || {}) }];
       }
       saveGuestCart(updated);
       setGuestItems(updated);
@@ -66,7 +84,7 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-      const response = await cartService.addToCart(productId, quantity);
+      const response = await cartService.addToCart(productId, quantity, size);
       setCart(response.data);
       return response;
     } catch (error) {
@@ -97,7 +115,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     try {
       await cartService.clearCart();
-      setCart({ items: [], totalAmount: 0 });
+      setCart({ items: [], totalAmount: 0, shippingCharges: 0, grandTotal: 0 });
     } catch (error) {
       throw error;
     }

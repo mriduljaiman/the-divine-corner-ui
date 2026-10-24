@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
 import { productService } from '../../../services/productService';
 import { FiSearch, FiX, FiPackage, FiEdit2, FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
+import { adminLayout } from '../../../components/admin/AdminLayout';
 
 export default function InventorySearch() {
   const router = useRouter();
@@ -416,3 +417,5 @@ export default function InventorySearch() {
     </div>
   );
 }
+
+InventorySearch.getLayout = adminLayout('Inventory');

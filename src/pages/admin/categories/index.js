@@ -1,223 +1,79 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import axios from '../../../services/api';
-import { useAuth } from '../../../context/AuthContext';
+// ============ pages/admin/categories/index.js ============
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { FiPlus, FiEdit2, FiTrash2, FiLayers, FiTag } from 'react-icons/fi';
+import api from '../../../services/api';
+import { adminLayout } from '../../../components/admin/AdminLayout';
+import { showToast } from '../../../utils/toast';
+import { apiError } from '../../../utils/format';
 
 export default function AdminCategories() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const [categories, setCategories] = useState(null);
 
-  useEffect(() => {
-    if (!isAdmin()) {
-      router.push('/');
-      return;
-    }
-    fetchCategories();
-  }, []);
+  const load = () => {
+    // /categories/all includes inactive ones (the public list hides them)
+    api.get('/categories/all?page=0&size=200')
+      .then(r => setCategories(r.data.content || []))
+      .catch(err => { setCategories([]); showToast.error(apiError(err)); });
+  };
+  useEffect(load, []);
 
-  const fetchCategories = async () => {
+  const remove = async (c) => {
+    if (!confirm(`Delete category "${c.name}"?`)) return;
     try {
-      const response = await axios.get('/categories');
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-    } finally {
-      setLoading(false);
+      await api.delete(`/categories/${c.id}`);
+      showToast.success('Category deleted');
+      load();
+    } catch (err) {
+      showToast.error(apiError(err, 'Failed to delete category'));
     }
   };
-
-  const deleteCategory = async (id) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-
-    try {
-      await axios.delete(`/categories/${id}`);
-      alert('Category deleted successfully');
-      fetchCategories();
-    } catch (error) {
-      alert('Failed to delete category: ' + (error.response?.data?.message || error.message));
-    }
-  };
-
-  if (loading) return <div className="loading">Loading...</div>;
 
   return (
-    <div className="admin-container">
-      <div className="admin-header">
-        <h1>Manage Categories</h1>
-        <button
-          className="btn-primary"
-          onClick={() => router.push('/admin/categories/new')}
-        >
-          + Add Category
-        </button>
+    <>
+      <div className="adm-page-head">
+        <div>
+          <h1>Categories</h1>
+          <p>{categories ? `${categories.length} categories` : 'Loading…'}</p>
+        </div>
+        <Link href="/admin/categories/new" className="adm-btn primary"><FiPlus /> Add category</Link>
       </div>
 
-      <div className="categories-grid">
-        {categories.map(category => (
-          <div key={category.id} className="category-card">
-            {category.imageUrl && (
-              <img src={category.imageUrl} alt={category.name} />
-            )}
-            <div className="category-info">
-              <h3>{category.name}</h3>
-              <p className="description">{category.description}</p>
-              {category.skuPrefix && (
-                <p className="sku-prefix">SKU Prefix: <strong>{category.skuPrefix}</strong></p>
-              )}
-              <span className={`status ${category.active ? 'active' : 'inactive'}`}>
-                {category.active ? 'Active' : 'Inactive'}
-              </span>
+      {!categories ? <div className="adm-skel" style={{ height: 200 }} /> : categories.length === 0 ? (
+        <div className="adm-card adm-empty">
+          <FiLayers />
+          <h3>No categories yet</h3>
+          <Link href="/admin/categories/new" className="adm-btn primary"><FiPlus /> Add category</Link>
+        </div>
+      ) : (
+        <div className="adm-grid adm-grid-4">
+          {categories.map(c => (
+            <div key={c.id} className="adm-card cat-card">
+              <div className="cat-img">
+                {c.imageUrl ? <img src={c.imageUrl} alt="" /> : <span>{c.icon || <FiLayers />}</span>}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1rem' }}>{c.name}</div>
+              <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {c.skuPrefix && <span className="adm-badge neutral"><FiTag /> {c.skuPrefix}</span>}
+                <span className={`adm-badge ${c.active ? 'success' : 'danger'}`}>{c.active ? 'Active' : 'Hidden'}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                <Link href={`/admin/categories/${c.id}`} className="adm-btn sm" style={{ flex: 1 }}><FiEdit2 /> Edit</Link>
+                <button className="adm-btn sm danger" onClick={() => remove(c)} aria-label={`Delete ${c.name}`}><FiTrash2 /></button>
+              </div>
             </div>
-            <div className="category-actions">
-              <button
-                className="btn-edit"
-                onClick={() => router.push(`/admin/categories/${category.id}`)}
-              >
-                Edit
-              </button>
-              <button
-                className="btn-delete"
-                onClick={() => deleteCategory(category.id)}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {categories.length === 0 && (
-        <div className="empty-state">
-          <p>No categories found. Create your first category!</p>
+          ))}
         </div>
       )}
 
       <style jsx>{`
-        .admin-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 2rem;
-        }
-
-        .admin-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-
-        .admin-header h1 {
-          margin: 0;
-        }
-
-        .categories-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 2rem;
-        }
-
-        .category-card {
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          overflow: hidden;
-          background: white;
-        }
-
-        .category-card img {
-          width: 100%;
-          height: 200px;
-          object-fit: cover;
-        }
-
-        .category-info {
-          padding: 1.5rem;
-        }
-
-        .category-info h3 {
-          margin: 0 0 0.5rem 0;
-          font-size: 1.25rem;
-        }
-
-        .description {
-          color: #6b7280;
-          font-size: 0.875rem;
-          margin-bottom: 1rem;
-        }
-
-        .sku-prefix {
-          background: #f3f4f6;
-          padding: 0.5rem;
-          border-radius: 4px;
-          font-size: 0.875rem;
-          margin-bottom: 1rem;
-        }
-
-        .status {
-          display: inline-block;
-          padding: 0.25rem 0.75rem;
-          border-radius: 12px;
-          font-size: 0.875rem;
-          font-weight: 500;
-        }
-
-        .status.active {
-          background: #d1fae5;
-          color: #065f46;
-        }
-
-        .status.inactive {
-          background: #fee2e2;
-          color: #991b1b;
-        }
-
-        .category-actions {
-          display: flex;
-          gap: 1rem;
-          padding: 1rem 1.5rem;
-          border-top: 1px solid #e5e7eb;
-        }
-
-        .btn-edit, .btn-delete {
-          flex: 1;
-          padding: 0.5rem 1rem;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 500;
-        }
-
-        .btn-edit {
-          background: #6366f1;
-          color: white;
-        }
-
-        .btn-edit:hover {
-          background: #4f46e5;
-        }
-
-        .btn-delete {
-          background: #ef4444;
-          color: white;
-        }
-
-        .btn-delete:hover {
-          background: #dc2626;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 3rem;
-          color: #6b7280;
-        }
-
-        .loading {
-          text-align: center;
-          padding: 3rem;
-          font-size: 1.125rem;
-        }
+        .cat-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+        .cat-img { width: 72px; height: 72px; border-radius: 18px; background: var(--adm-primary-soft); color: var(--adm-primary);
+          display: grid; place-items: center; font-size: 1.8rem; overflow: hidden; }
+        .cat-img img { width: 100%; height: 100%; object-fit: cover; }
       `}</style>
-    </div>
+    </>
   );
 }
+
+AdminCategories.getLayout = adminLayout('Categories');

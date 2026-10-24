@@ -7,7 +7,7 @@ import { authService } from '../services/authService';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isAuthenticated, checkAuth } = useAuth();
+  const { user, isAuthenticated, checkAuth, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,8 +22,9 @@ export default function ProfilePage() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated()) {
-      router.push('/auth/login');
+      router.push('/auth/login?redirect=/profile');
       return;
     }
 
@@ -39,10 +40,11 @@ export default function ProfilePage() {
         country: user.country || ''
       });
     }
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, authLoading]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -101,7 +103,7 @@ export default function ProfilePage() {
             <label>Email</label>
             <input
               type="email"
-              value={user?.email}
+              value={user?.email || ''}
               disabled
               className="disabled"
             />

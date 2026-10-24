@@ -1,137 +1,161 @@
 // ============ pages/admin/products/index.js ============
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../../context/AuthContext';
+import { useRouter } from 'next/router';
+import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiTag, FiEye, FiEyeOff, FiPackage, FiChevronLeft, FiChevronRight, FiImage } from 'react-icons/fi';
+import { adminLayout } from '../../../components/admin/AdminLayout';
+import { adminService } from '../../../services/adminService';
 import { productService } from '../../../services/productService';
+import { showToast } from '../../../utils/toast';
+import { inr, apiError } from '../../../utils/format';
+import { cloudinaryPad } from '../../../utils/cloudinary';
+
+const PAGE_SIZE = 20;
 
 export default function AdminProducts() {
   const router = useRouter();
-  const { isAdmin, loading: authLoading } = useAuth();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState('');
+  const [q, setQ] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [data, setData] = useState(null);
+  const [showCost, setShowCost] = useState(false);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => { adminService.categories().then(r => setCategories(r.data || [])).catch(() => {}); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(q.trim()); setPage(0); }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
 
   useEffect(() => {
-    if (!authLoading && !isAdmin()) {
-      router.push('/');
-      return;
-    }
-    if (isAdmin()) {
-      fetchProducts();
-    }
-  }, [authLoading, isAdmin]);
+    let alive = true;
+    adminService.searchProducts({ search, categoryId, page, size: PAGE_SIZE })
+      .then(r => alive && setData(r.data))
+      .catch(err => alive && showToast.error(apiError(err)));
+    return () => { alive = false; };
+  }, [search, categoryId, page, reload]);
 
-  const fetchProducts = async (page = 0) => {
+  const remove = async (p) => {
+    if (!confirm(`Delete "${p.name}"? It will be hidden from the store; past orders and bills stay intact.`)) return;
     try {
-      setLoading(true);
-      const response = await productService.getAllProducts(page, 20);
-      setProducts(response.data.content);
-      setPagination({
-        page: response.data.page,
-        totalPages: response.data.totalPages
-      });
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
+      await productService.deleteProduct(p.id);
+      showToast.success('Product deleted');
+      setReload(r => r + 1);
+    } catch (err) {
+      showToast.error(apiError(err, 'Failed to delete product'));
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-
-    try {
-      await productService.deleteProduct(id);
-      fetchProducts(pagination.page);
-    } catch (error) {
-      alert('Failed to delete product');
-    }
-  };
-
-  if (authLoading || loading) return <div className="loading">Loading...</div>;
+  const products = data?.content || [];
 
   return (
-    <div className="admin-page">
-      <div className="container">
-        <div className="admin-header">
-          <h1>Manage Products</h1>
-          <Link href="/admin/products/new" className="btn btn-primary">
-            Add New Product
-          </Link>
+    <>
+      <div className="adm-page-head">
+        <div>
+          <h1>Products</h1>
+          <p>{data ? `${data.totalElements} active products` : 'Loading…'}</p>
         </div>
+        <div className="adm-actions">
+          <Link href="/admin/barcodes" className="adm-btn"><FiTag /> Labels</Link>
+          <Link href="/admin/products/new" className="adm-btn primary"><FiPlus /> Add product</Link>
+        </div>
+      </div>
 
-        <div className="admin-table">
-          <table>
+      <div className="adm-toolbar">
+        <div className="adm-input-group grow">
+          <FiSearch />
+          <input className="adm-input" placeholder="Search name, SKU or barcode" value={q} onChange={e => setQ(e.target.value)} />
+        </div>
+        <select className="adm-select" style={{ width: 200 }} value={categoryId} onChange={e => { setCategoryId(e.target.value); setPage(0); }} aria-label="Category">
+          <option value="">All categories</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <button className="adm-btn" onClick={() => setShowCost(s => !s)} title="Show / hide buying prices">
+          {showCost ? <FiEyeOff /> : <FiEye />} Cost
+        </button>
+      </div>
+
+      {!data ? <div className="adm-skel" style={{ height: 320 }} /> : products.length === 0 ? (
+        <div className="adm-card adm-empty">
+          <FiPackage />
+          <h3>No products found</h3>
+          <Link href="/admin/products/new" className="adm-btn primary"><FiPlus /> Add product</Link>
+        </div>
+      ) : (
+        <div className="adm-table-wrap">
+          <table className="adm-table">
             <thead>
               <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Stock</th>
+                <th>Product</th>
                 <th>Category</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th className="num">Price</th>
+                {showCost && <th className="num">Cost / margin</th>}
+                <th className="num">Stock</th>
+                <th />
               </tr>
             </thead>
             <tbody>
-              {products.map(product => (
-                <tr key={product.id}>
-                  <td>
-                    {product.images && product.images[0] ? (
-                      <img src={product.images[0]} alt={product.name} className="table-image" />
-                    ) : (
-                      <div className="no-image-small">No Image</div>
+              {products.map(p => {
+                const price = Number(p.discountPrice || p.price);
+                const cost = p.purchasingPrice != null ? Number(p.purchasingPrice) : null;
+                const low = p.stockQuantity <= (p.reorderPoint ?? 10);
+                return (
+                  <tr key={p.id} className="clickable" onClick={() => router.push(`/admin/products/${p.id}`)}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {p.images?.[0]
+                          ? <img src={cloudinaryPad(p.images[0], 96, 96)} alt="" className="adm-thumb" />
+                          : <span className="adm-thumb" style={{ display: 'grid', placeItems: 'center', color: '#c7cbe0' }}><FiImage /></span>}
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700 }}>{p.name}</div>
+                          <div className="adm-card-sub">{p.sku}{p.barcode ? ` · ${p.barcode}` : ''}</div>
+                        </div>
+                        {p.featured && <span className="adm-badge pending">Featured</span>}
+                      </div>
+                    </td>
+                    <td>{p.category?.name || '—'}</td>
+                    <td className="num">
+                      <b>{inr(price)}</b>
+                      {p.discountPrice && <div className="adm-card-sub"><s>{inr(p.price)}</s></div>}
+                    </td>
+                    {showCost && (
+                      <td className="num">
+                        {cost == null ? <span className="text-muted">not set</span> : (
+                          <>
+                            <div>{inr(cost)}</div>
+                            <div className={`adm-card-sub ${price - cost < 0 ? 'text-danger' : 'text-success'}`}>{inr(price - cost)}</div>
+                          </>
+                        )}
+                      </td>
                     )}
-                  </td>
-                  <td>{product.name}</td>
-                  <td>₹{product.price?.toLocaleString('en-IN')}</td>
-                  <td className={product.stockQuantity < 10 ? 'low-stock' : ''}>
-                    {product.stockQuantity}
-                  </td>
-                  <td>{product.category?.name || 'N/A'}</td>
-                  <td>
-                    <span className={`badge ${product.active ? 'badge-success' : 'badge-danger'}`}>
-                      {product.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <Link href={`/admin/products/${product.id}`} className="btn btn-sm btn-secondary">
-                        Edit
-                      </Link>
-                      <button 
-                        onClick={() => handleDelete(product.id)}
-                        className="btn btn-sm btn-danger"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    <td className="num">
+                      <span className={`adm-badge ${p.stockQuantity === 0 ? 'danger' : low ? 'pending' : 'success'}`}>
+                        {p.stockQuantity === 0 ? 'Out of stock' : `${p.stockQuantity} left`}
+                      </span>
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <Link href={`/admin/products/${p.id}`} className="adm-icon-btn" aria-label="Edit" title="Edit"><FiEdit2 /></Link>{' '}
+                      <button className="adm-icon-btn" onClick={() => remove(p)} aria-label="Delete" title="Delete"><FiTrash2 /></button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+      )}
 
-        {pagination.totalPages > 1 && (
-          <div className="pagination">
-            <button
-              disabled={pagination.page === 0}
-              onClick={() => fetchProducts(pagination.page - 1)}
-            >
-              Previous
-            </button>
-            <span>Page {pagination.page + 1} of {pagination.totalPages}</span>
-            <button
-              disabled={pagination.page === pagination.totalPages - 1}
-              onClick={() => fetchProducts(pagination.page + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+      {data && data.totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16 }}>
+          <button className="adm-btn sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}><FiChevronLeft /> Prev</button>
+          <span className="adm-card-sub">Page {page + 1} of {data.totalPages}</span>
+          <button className="adm-btn sm" disabled={data.last} onClick={() => setPage(p => p + 1)}>Next <FiChevronRight /></button>
+        </div>
+      )}
+    </>
   );
 }
+
+AdminProducts.getLayout = adminLayout('Products');

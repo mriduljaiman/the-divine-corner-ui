@@ -64,7 +64,7 @@ export default function ProductDetail() {
   const handleAddToCart = async () => {
     if (!isAuthenticated()) {
       showToast.warning('Please login to add items to cart');
-      router.push('/auth/login');
+      router.push(`/auth/login?redirect=${encodeURIComponent(router.asPath)}`);
       return;
     }
     if (product.stockQuantity === 0) {
@@ -77,7 +77,7 @@ export default function ProductDetail() {
     }
     try {
       setAdding(true);
-      await addToCart(product.id, quantity);
+      await addToCart(product.id, quantity, null, selectedSize || null);
       showToast.addedToCart(product.name);
     } catch (err) {
       showToast.error(err.response?.data?.message || 'Failed to add to cart');
@@ -240,13 +240,17 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Rating */}
-            <div className="pd-rating">
-              {[...Array(5)].map((_, i) => (
-                <FiStar key={i} className={i < 4 ? 'star-filled' : 'star-empty'} size={16} />
-              ))}
-              <span className="pd-rating-count">(24 reviews)</span>
-            </div>
+            {/* Rating (only when there are real reviews) */}
+            {product.reviewCount > 0 && (
+              <div className="pd-rating">
+                {[...Array(5)].map((_, i) => (
+                  <FiStar key={i} className={i < Math.round(product.rating || 0) ? 'star-filled' : 'star-empty'} size={16} />
+                ))}
+                <span className="pd-rating-count">
+                  {Number(product.rating || 0).toFixed(1)} ({product.reviewCount} review{product.reviewCount === 1 ? '' : 's'})
+                </span>
+              </div>
+            )}
 
             {/* Price */}
             <div className="pd-price-block">

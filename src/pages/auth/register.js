@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
+import { getRedirectTarget } from '../../utils/redirect';
 import axios from '../../services/api';
 
 export default function RegisterPage() {
@@ -23,7 +24,8 @@ export default function RegisterPage() {
   const [otpSuccess, setOtpSuccess] = useState('');
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (e.target.name === 'email') {
       setOtpSent(false);
       setOtpSuccess('');
@@ -35,7 +37,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await googleLogin(credentialResponse.credential);
-      router.push('/');
+      router.push(getRedirectTarget(router.query));
     } catch (err) {
       setError(err.response?.data?.message || 'Google signup failed. Please try again.');
     } finally {
@@ -75,7 +77,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register({ ...formData, otp });
-      router.push('/');
+      router.push(getRedirectTarget(router.query));
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {

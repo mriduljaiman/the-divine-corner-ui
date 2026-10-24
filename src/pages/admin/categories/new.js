@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import axios from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { adminLayout } from '../../../components/admin/AdminLayout';
 
 export default function NewCategory() {
   const EMOJI_OPTIONS = ['📚','🎁','🧸','✏️','🛍️','🎀','🖊️','📖','🎮','🧩','🎨','🪀','📦','🎭','🌸','🪔','💎','🕯️','🙏','🔮','🌿','⭐','🎯','🏠','👗','👟','🍬','🎵','💻','📱'];
@@ -24,10 +25,8 @@ export default function NewCategory() {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -104,7 +103,7 @@ export default function NewCategory() {
               <button
                 key={emoji}
                 type="button"
-                onClick={() => setFormData({ ...formData, icon: emoji })}
+                onClick={() => setFormData(prev => ({ ...prev, icon: emoji }))}
                 style={{
                   fontSize: '1.5rem', padding: '4px 8px', cursor: 'pointer',
                   border: formData.icon === emoji ? '2px solid #6366f1' : '2px solid #e5e7eb',
@@ -271,3 +270,5 @@ export default function NewCategory() {
     </div>
   );
 }
+
+NewCategory.getLayout = adminLayout('New Category');

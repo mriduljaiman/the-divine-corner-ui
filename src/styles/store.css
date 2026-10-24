@@ -1,0 +1,241 @@
+/* ============================================
+   THE DIVINE CORNER – storefront refresh
+   Loaded after globals.css; overrides the dense full-bleed grid with
+   spaced, card-based layout (Flipkart / Meesho style).
+   ============================================ */
+
+:root {
+  --store-max: 1280px;
+  --store-gutter: 12px;
+  --store-radius: 14px;
+  --store-saffron: #f97316;
+  --store-gold: #f59e0b;
+  --store-maroon: #7c1d3f;
+}
+
+/* ---------- product grid ---------- */
+.meesho-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--store-gutter);
+  background: transparent;
+  padding: var(--store-gutter);
+  max-width: var(--store-max);
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .meesho-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); --store-gutter: 16px; }
+}
+
+@media (min-width: 960px) {
+  .meesho-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); --store-gutter: 20px; }
+}
+
+@media (min-width: 1240px) {
+  .meesho-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+.meesho-card,
+.meesho-skeleton-card {
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: var(--store-radius);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.meesho-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.10);
+}
+
+.meesho-img-wrap {
+  padding: 0;
+  background: #f7f8fb;
+}
+
+.meesho-img {
+  padding: 8px;
+  mix-blend-mode: multiply;
+}
+
+.meesho-no-img {
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0;
+  background: radial-gradient(circle at 30% 20%, #fff7ed 0%, #fdecd8 45%, #f9dcc4 100%);
+}
+
+.meesho-no-img::before {
+  content: 'ॐ';
+  font-size: 2.6rem;
+  color: rgba(124, 29, 63, 0.35);
+}
+
+.meesho-no-img::after {
+  content: 'The Divine Corner';
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(124, 29, 63, 0.45);
+  font-weight: 600;
+}
+
+/* sold out: small pill instead of a heavy grey overlay */
+.meesho-oos {
+  inset: auto auto 10px 10px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+}
+
+.meesho-card:has(.meesho-oos) .meesho-img,
+.meesho-card:has(.meesho-oos) .meesho-no-img {
+  filter: grayscale(0.7);
+  opacity: 0.75;
+}
+
+.meesho-discount-badge {
+  top: 10px;
+  bottom: auto;
+  left: 10px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.68rem;
+  background: #16a34a;
+}
+
+.meesho-info {
+  padding: 10px 12px 4px;
+}
+
+.meesho-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-height: 2.7em;
+}
+
+.meesho-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.meesho-add-btn {
+  width: calc(100% - 24px);
+  margin: 8px 12px 12px;
+  padding: 9px 0;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.meesho-add-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.meesho-add-btn:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.meesho-skeleton-card { padding-bottom: 8px; }
+
+/* ---------- listing page ---------- */
+.products-app-page {
+  background: #f6f7fb;
+  min-height: 100vh;
+}
+
+.products-app-page .top-filter-bar,
+.products-app-page .products-result-count,
+.products-app-page .filter-panel {
+  max-width: var(--store-max);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.products-result-count {
+  background: transparent !important;
+  padding: 8px 16px 0 !important;
+}
+
+/* ---------- home ---------- */
+.home-app {
+  background: #f6f7fb;
+}
+
+.store-section {
+  max-width: var(--store-max);
+  margin: 0 auto;
+  padding: 8px 0 4px;
+}
+
+.store-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px var(--store-gutter, 12px) 0;
+}
+
+.store-section-head h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: #0f172a;
+}
+
+.store-section-head p {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.store-section-head a {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.home-view-more {
+  background: transparent;
+  padding: 8px 16px 28px;
+}
+
+.home-view-more .btn {
+  border-radius: 999px;
+  padding: 12px 28px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  font-weight: 700;
+}
+
+/* ---------- category chips ---------- */
+.cat-scroll-bar {
+  background: #fff;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.cat-scroll-inner {
+  max-width: var(--store-max);
+  margin: 0 auto;
+}
+
+/* pages that paint their own full-width background start right under the header */
+.main-content:has(> .home-app),
+.main-content:has(> .products-app-page),
+.main-content:has(> .cart-wrap),
+.main-content:has(> .co-wrap) {
+  padding-top: 0;
+}

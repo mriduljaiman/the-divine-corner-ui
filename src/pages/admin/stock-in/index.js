@@ -3,6 +3,13 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../../context/AuthContext';
 import styles from '../../../styles/Admin.module.css';
 import api from '../../../services/api';
+import { adminLayout } from '../../../components/admin/AdminLayout';
+
+// <input type="datetime-local"> wants local time, not UTC
+const localDateTimeInput = () => {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
 
 export default function StockIn() {
   const router = useRouter();
@@ -13,7 +20,7 @@ export default function StockIn() {
   const [formData, setFormData] = useState({
     productId: '',
     quantity: '',
-    movementDate: new Date().toISOString().slice(0, 16),
+    movementDate: localDateTimeInput(),
     supplierId: '',
     invoiceNumber: '',
     unitCost: '',
@@ -38,8 +45,8 @@ export default function StockIn() {
   useEffect(() => {
     if (searchTerm.trim()) {
       const filtered = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.barcode && p.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredProducts(filtered);
@@ -50,7 +57,7 @@ export default function StockIn() {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products/all');
+      const response = await api.get('/products?page=0&size=1000');
       setProducts(response.data.content || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -112,7 +119,7 @@ export default function StockIn() {
       setFormData({
         productId: '',
         quantity: '',
-        movementDate: new Date().toISOString().slice(0, 16),
+        movementDate: localDateTimeInput(),
         supplierId: '',
         invoiceNumber: '',
         unitCost: '',
@@ -318,3 +325,5 @@ export default function StockIn() {
     </div>
   );
 }
+
+StockIn.getLayout = adminLayout('Stock In');

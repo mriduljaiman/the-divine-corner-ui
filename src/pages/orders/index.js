@@ -29,7 +29,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated()) { router.push('/auth/login'); return; }
+    if (!isAuthenticated()) { router.push('/auth/login?redirect=/orders'); return; }
     orderService.getMyOrders(0, 50)
       .then(r => setOrders(r.data.content || []))
       .catch(() => {})

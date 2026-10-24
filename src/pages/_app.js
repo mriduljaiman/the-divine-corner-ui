@@ -1,4 +1,7 @@
 import '../styles/globals.css';
+import '../styles/admin.css';
+import '../styles/store.css';
+import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from '../context/AuthContext';
@@ -16,6 +19,8 @@ const Toaster = dynamic(
 );
 
 function MyApp({ Component, pageProps }) {
+  const router = useRouter();
+  const isAdminArea = router.pathname.startsWith('/admin');
   const getLayout = Component.getLayout || ((page) => (
     <>
       <Header />
@@ -33,7 +38,7 @@ function MyApp({ Component, pageProps }) {
         {getLayout(<Component {...pageProps} />)}
         <SplashScreen />
         <TawkTo />
-        <PWAInstallBanner />
+        {!isAdminArea && <PWAInstallBanner />}
         <Toaster
           position="top-right"
           toastOptions={{

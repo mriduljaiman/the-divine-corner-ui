@@ -37,26 +37,31 @@ export default function ProductsPage() {
   }, [router.isReady, router.query.category, router.query.search]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [filters]);
+    let ignore = false;
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await productService.searchProducts(filters);
-      setProducts(response.data.content || []);
-      setPagination({
-        page: response.data.page,
-        totalPages: response.data.totalPages,
-        totalElements: response.data.totalElements,
-      });
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productService.searchProducts(filters);
+        if (ignore) return;
+        setProducts(response.data.content || []);
+        setPagination({
+          page: response.data.page,
+          totalPages: response.data.totalPages,
+          totalElements: response.data.totalElements,
+        });
+      } catch (error) {
+        if (ignore) return;
+        console.error('Error fetching products:', error);
+        setProducts([]);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+
+    fetchProducts();
+    return () => { ignore = true; };
+  }, [filters]);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value, page: 0 }));

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import axios from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
+import { adminLayout } from '../../../components/admin/AdminLayout';
 
 export default function EditCategory() {
   const EMOJI_OPTIONS = ['📚','🎁','🧸','✏️','🛍️','🎀','🖊️','📖','🎮','🧩','🎨','🪀','📦','🎭','🌸','🪔','💎','🕯️','🙏','🔮','🌿','⭐','🎯','🏠','👗','👟','🍬','🎵','💻','📱'];
@@ -50,11 +51,9 @@ export default function EditCategory() {
   };
 
   const handleChange = (e) => {
+    const { name } = e.target;
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setFormData({
-      ...formData,
-      [e.target.name]: value
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -133,7 +132,7 @@ export default function EditCategory() {
               <button
                 key={emoji}
                 type="button"
-                onClick={() => setFormData({ ...formData, icon: emoji })}
+                onClick={() => setFormData(prev => ({ ...prev, icon: emoji }))}
                 style={{
                   fontSize: '1.5rem', padding: '4px 8px', cursor: 'pointer',
                   border: formData.icon === emoji ? '2px solid #6366f1' : '2px solid #e5e7eb',
@@ -329,3 +328,5 @@ export default function EditCategory() {
     </div>
   );
 }
+
+EditCategory.getLayout = adminLayout('Edit Category');
