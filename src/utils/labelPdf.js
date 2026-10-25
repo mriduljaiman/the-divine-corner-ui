@@ -4,15 +4,16 @@
 import { inr } from './format';
 
 export const SHEETS = {
-  // 8mm between columns keeps the Code128 quiet zone (10 modules) on both sides of every label
-  a4: { label: 'A4 sheet · 3 per row', page: [210, 297], margin: 10, cols: 3, gapX: 8 },
+  // compact labels: 4 per row (3 when a QR sits next to the bars). The column gap keeps the
+  // Code128 quiet zone (10 modules) on both sides of every label.
+  a4: { label: 'A4 sheet · 4 per row', page: [210, 297], margin: 10, cols: 4, colsWithQr: 3, gapX: 7 },
   roll: { label: 'Thermal roll · 50 × 25 mm', page: [50, 25], margin: 1.5, cols: 1, gapX: 0 },
 };
 
-const BAR_H = 14;        // mm, bar height on A4
-const CODE_H = 5;        // mm, human-readable code under the bars
+const BAR_H = 10;        // mm, bar height on A4
+const CODE_H = 4;        // mm, human-readable code under the bars
 const INFO_H = 7.5;      // mm, name + price above the bars (optional)
-const ROW_GAP = 5;       // mm between label rows
+const ROW_GAP = 4;       // mm between label rows
 const HEADER_H = 7;      // mm, section title
 const SECTION_GAP = 4;   // mm after each section
 
@@ -28,8 +29,9 @@ function cellHeight(opts) {
 export function planA4(sections, opts = {}) {
   const s = SHEETS.a4;
   const [pw, ph] = s.page;
+  const cols = opts.showQr ? s.colsWithQr : s.cols;
   const usableW = pw - 2 * s.margin;
-  const cellW = (usableW - (s.cols - 1) * s.gapX) / s.cols;
+  const cellW = (usableW - (cols - 1) * s.gapX) / cols;
   const cellH = cellHeight(opts);
   const bottom = ph - s.margin;
   const pages = [[]];
@@ -49,7 +51,7 @@ export function planA4(sections, opts = {}) {
         page().push({ type: 'header', x: s.margin, y, text: `${product.name} (contd.)` });
         y += HEADER_H;
       }
-      const n = Math.min(s.cols, left);
+      const n = Math.min(cols, left);
       for (let c = 0; c < n; c++) {
         page().push({ type: 'label', x: s.margin + c * (cellW + s.gapX), y, w: cellW, h: cellH, product });
       }
@@ -119,7 +121,7 @@ async function drawLabel(doc, product, box, opts, cache, siteUrl) {
   const png = await barcodePng(product.barcode, cache);
   doc.addImage(png.data, 'PNG', x, y, w, barH, undefined, 'FAST');
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(barH < 10 ? 7.5 : 10);
+  doc.setFontSize(barH < 9 ? 7.5 : 8.5);
   doc.text(product.barcode, x, y + barH + codeH - 1.2, { charSpace: 0.35 });
 }
 

@@ -63,7 +63,7 @@ export default function BarcodesPage() {
     [rows],
   );
   const totalLabels = sections.reduce((s, x) => s + x.copies, 0);
-  const pages = useMemo(() => countPages(sections, sheet, { showInfo }), [sections, sheet, showInfo]);
+  const pages = useMemo(() => countPages(sections, sheet, { showInfo, showQr }), [sections, sheet, showInfo, showQr]);
   const missingCode = rows.filter(r => r.include && !r.product.barcode).length;
 
   // small on-screen preview of the first few products
@@ -227,7 +227,7 @@ export default function BarcodesPage() {
                   <div key={product.id}>
                     <div className="bc-prev-head">{product.name} · {copies} label{copies === 1 ? '' : 's'}</div>
                     <div className="bc-prev-grid">
-                      {Array.from({ length: Math.min(3, copies) }).map((_, i) => (
+                      {Array.from({ length: Math.min(4, copies) }).map((_, i) => (
                         <div key={i} className="bc-prev-label">
                           {showInfo && <div className="bc-prev-name">{product.name}</div>}
                           {preview[product.barcode] && <img src={preview[product.barcode]} alt="" />}
@@ -252,7 +252,7 @@ export default function BarcodesPage() {
         .bc-opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.88rem; padding: 4px 0; }
         .bc-preview { margin-top: 8px; padding: 12px; background: #fff; border: 1px dashed var(--adm-border); border-radius: 10px; }
         .bc-prev-head { font-size: 0.72rem; font-weight: 700; color: #555; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; margin: 4px 0 8px; }
-        .bc-prev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+        .bc-prev-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
         .bc-prev-label img { width: 100%; height: 30px; object-fit: fill; display: block; }
         .bc-prev-code { font-size: 0.62rem; letter-spacing: 0.06em; margin-top: 2px; }
         .bc-prev-name { font-size: 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
