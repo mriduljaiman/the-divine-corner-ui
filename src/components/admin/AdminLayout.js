@@ -8,6 +8,7 @@ import {
   FiShoppingCart, FiMoreHorizontal,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
+import { useDueReminders } from '../../utils/dues';
 
 export const ADMIN_NAV = [
   { title: 'Overview', items: [{ href: '/admin/dashboard', label: 'Dashboard', icon: FiGrid }] },
@@ -62,6 +63,7 @@ export default function AdminLayout({ title, children }) {
 
   const ready = !loading && isAdmin();
   const pathname = router.pathname;
+  const remindCount = useDueReminders(ready, router.asPath);
 
   return (
     <div className={`adm-shell ${drawerOpen ? 'drawer-open' : ''}`}>
@@ -85,6 +87,7 @@ export default function AdminLayout({ title, children }) {
                 <Link key={href} href={href} className={`adm-nav-link ${isActive(pathname, href) ? 'active' : ''}`}>
                   <Icon size={18} />
                   <span>{label}</span>
+                  {href === '/admin/dues' && remindCount > 0 && <span className="adm-nav-badge" title="Customers to remind today">{remindCount}</span>}
                 </Link>
               ))}
             </div>
@@ -135,8 +138,9 @@ export default function AdminLayout({ title, children }) {
         <Link href="/admin/pos?scan=1" className="adm-fab" aria-label="Scan and bill">
           <FiMaximize />
         </Link>
-        <Link href="/admin/dues" className={`adm-bottom-link ${pathname.startsWith('/admin/dues') ? 'active' : ''}`}>
+        <Link href="/admin/dues" className={`adm-bottom-link ${pathname.startsWith('/admin/dues') ? 'active' : ''}`} style={{ position: 'relative' }}>
           <FiAlertCircle /> Dues
+          {remindCount > 0 && <span className="adm-bottom-badge">{remindCount}</span>}
         </Link>
         <button type="button" className="adm-bottom-link" onClick={() => setDrawerOpen(true)}>
           <FiMoreHorizontal /> More

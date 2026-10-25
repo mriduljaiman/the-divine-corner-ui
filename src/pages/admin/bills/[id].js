@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { FiArrowLeft, FiDollarSign, FiSlash, FiX } from 'react-icons/fi';
 import { adminLayout } from '../../../components/admin/AdminLayout';
 import BillShare from '../../../components/admin/BillShare';
+import PaymentForm from '../../../components/admin/PaymentForm';
+import { invalidateDues, promiseText } from '../../../utils/dues';
 import { adminService } from '../../../services/adminService';
 import { showToast } from '../../../utils/toast';
 import { inr, fmtDate, apiError } from '../../../utils/format';
@@ -15,7 +17,6 @@ export default function BillDetailPage() {
   const [bill, setBill] = useState(null);
   const [error, setError] = useState('');
   const [payOpen, setPayOpen] = useState(false);
-  const [pay, setPay] = useState({ amount: '', method: 'CASH', note: '' });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -23,14 +24,14 @@ export default function BillDetailPage() {
     adminService.bill(id).then(r => setBill(r.data)).catch(err => setError(apiError(err, 'Bill not found')));
   }, [id]);
 
-  const receive = async (e) => {
-    e.preventDefault();
+  const receive = async (payload) => {
     setBusy(true);
     try {
-      const { data } = await adminService.recordPayment(bill.id, { amount: Number(pay.amount), paymentMethod: pay.method, note: pay.note });
+      const { data } = await adminService.recordPayment(bill.id, payload);
       setBill(data);
       setPayOpen(false);
-      showToast.success('Payment recorded');
+      invalidateDues();
+      showToast.success(payload.writeOff ? 'Written off' : 'Payment recorded');
     } catch (err) {
       showToast.error(apiError(err));
     } finally {
@@ -65,7 +66,7 @@ export default function BillDetailPage() {
         </div>
         <div className="adm-actions">
           {hasDue && !bill.voided && (
-            <button className="adm-btn success" onClick={() => { setPay({ amount: String(bill.amountDue), method: 'CASH', note: '' }); setPayOpen(true); }}>
+            <button className="adm-btn success" onClick={() => setPayOpen(true)}>
               <FiDollarSign /> Receive due
             </button>
           )}
@@ -85,6 +86,9 @@ export default function BillDetailPage() {
             <div className="adm-row"><span className="text-muted">Total</span><b>{inr(bill.total)}</b></div>
             <div className="adm-row"><span className="text-muted">Paid</span><b className="text-success">{inr(bill.amountPaid)}</b></div>
             <div className="adm-row"><span className="text-muted">Due</span><b className={hasDue ? 'text-danger' : ''}>{inr(bill.amountDue)}</b></div>
+            {hasDue && <div className="adm-row"><span className="text-muted">Reminder</span><span>{promiseText(bill.dueDate)}</span></div>}
+            {Number(bill.writtenOff) > 0 && <div className="adm-row"><span className="text-muted">Written off</span><b>{inr(bill.writtenOff)}</b></div>}
+            {bill.source === 'MANUAL' && <span className="adm-badge neutral">Manual due entry</span>}
             {bill.items.some(i => i.costPrice != null) && (
               <div className="adm-row"><span className="text-muted">Profit</span>
                 <b>{inr(bill.items.reduce((s, i) => s + (Number(i.unitPrice) - Number(i.costPrice ?? i.unitPrice)) * i.quantity, 0))}</b>
@@ -92,13 +96,13 @@ export default function BillDetailPage() {
             )}
             {bill.voided && <div className="adm-badge danger" style={{ marginTop: 8 }}>Void: {bill.voidReason}</div>}
             <hr className="adm-divider" />
-            <Link href={`/admin/dues?phone=${bill.customerPhone}`} className="adm-btn sm block">Customer history</Link>
+            <Link href={`/admin/dues/${bill.customerPhone}`} className="adm-btn sm block">Customer khata</Link>
           </div>
           <div className="adm-card">
             <h2 className="adm-card-title" style={{ marginBottom: 10 }}>Payments received later</h2>
             {(bill.payments || []).length === 0 ? <div className="adm-card-sub">None</div> : bill.payments.map(p => (
               <div key={p.id} className="adm-row">
-                <span>{fmtDate(p.paidAt, true)} <span className="adm-badge neutral">{p.paymentMethod}</span>{p.note ? <div className="adm-card-sub">{p.note}</div> : null}</span>
+                <span>{fmtDate(p.paidAt)} <span className={`adm-badge ${p.paymentMethod === 'WRITE_OFF' ? 'danger' : 'neutral'}`}>{p.paymentMethod === 'WRITE_OFF' ? 'Written off' : p.paymentMethod}</span>{p.note ? <div className="adm-card-sub">{p.note}</div> : null}</span>
                 <b className="text-success">{inr(p.amount)}</b>
               </div>
             ))}
@@ -108,35 +112,16 @@ export default function BillDetailPage() {
 
       {payOpen && (
         <div className="adm-modal-backdrop" onClick={() => setPayOpen(false)}>
-          <form className="adm-modal" onClick={e => e.stopPropagation()} onSubmit={receive}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()} role="dialog" aria-label="Receive payment">
             <div className="adm-modal-head">
-              <h3>Receive payment</h3>
+              <h3>Receive payment · due {inr(bill.amountDue)}</h3>
               <button type="button" className="adm-icon-btn" onClick={() => setPayOpen(false)} aria-label="Close"><FiX /></button>
             </div>
             <div className="adm-modal-body">
-              <div className="adm-field">
-                <label className="adm-label">Amount (due {inr(bill.amountDue)})</label>
-                <input className="adm-input" type="number" step="0.01" min="0.01" max={bill.amountDue} required autoFocus
-                  value={pay.amount} onChange={e => setPay(p => ({ ...p, amount: e.target.value }))} />
-              </div>
-              <div className="adm-field">
-                <label className="adm-label">Method</label>
-                <div className="adm-chips">
-                  {['CASH', 'UPI', 'CARD'].map(m => (
-                    <button key={m} type="button" className={`adm-chip ${pay.method === m ? 'active' : ''}`} onClick={() => setPay(p => ({ ...p, method: m }))}>{m}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="adm-field">
-                <label className="adm-label">Note</label>
-                <input className="adm-input" value={pay.note} onChange={e => setPay(p => ({ ...p, note: e.target.value }))} placeholder="Optional" />
-              </div>
+              <PaymentForm maxAmount={Number(bill.amountDue)} minDate={(bill.billDate || '').slice(0, 10)} busy={busy}
+                onSubmit={receive} onCancel={() => setPayOpen(false)} />
             </div>
-            <div className="adm-modal-foot">
-              <button type="button" className="adm-btn" onClick={() => setPayOpen(false)}>Cancel</button>
-              <button type="submit" className="adm-btn success" disabled={busy}>{busy ? 'Saving…' : 'Save payment'}</button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
     </>

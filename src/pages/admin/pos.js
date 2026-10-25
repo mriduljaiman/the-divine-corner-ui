@@ -11,7 +11,8 @@ import { adminLayout } from '../../components/admin/AdminLayout';
 import BillShare from '../../components/admin/BillShare';
 import { adminService } from '../../services/adminService';
 import { showToast } from '../../utils/toast';
-import { inr, normalizePhone, apiError } from '../../utils/format';
+import { inr, normalizePhone, apiError, todayIso } from '../../utils/format';
+import { invalidateDues } from '../../utils/dues';
 import { extractCode, addToLines, billTotals, loadDraft, saveDraft, clearDraft, beep } from '../../utils/pos';
 import { cloudinaryPad } from '../../utils/cloudinary';
 
@@ -21,7 +22,7 @@ const METHODS = [['CASH', 'Cash'], ['UPI', 'UPI'], ['CARD', 'Card']];
 export default function PosPage() {
   const router = useRouter();
   const [lines, setLines] = useState([]);
-  const [customer, setCustomer] = useState({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true });
+  const [customer, setCustomer] = useState({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '' });
   const [hydrated, setHydrated] = useState(false);
   const [camera, setCamera] = useState(false);
   const [query, setQuery] = useState('');
@@ -193,14 +194,16 @@ export default function PosPage() {
         paymentMethod: customer.method,
         amountPaid: paid,
         notes: customer.notes.trim() || null,
+        dueDate: due > 0 && customer.dueDate ? customer.dueDate : null,
         items: lines.map(l => ({ productId: l.productId, quantity: l.qty, unitPrice: Number(l.unitPrice) })),
       });
       cacheRef.current.clear(); // stock changed
       clearDraft();
       setLines([]);
-      setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true });
+      setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '' });
       setTouched(false);
       setShowCost(new Set());
+      invalidateDues();
       setDone(data);
       beep(true);
     } catch (err) {
@@ -213,7 +216,7 @@ export default function PosPage() {
   const clearAll = () => {
     if (lines.length && !confirm('Clear this bill?')) return;
     setLines([]);
-    setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true });
+    setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '' });
     setTouched(false);
   };
 
@@ -408,7 +411,14 @@ export default function PosPage() {
             </div>
           )}
           {due > 0 && (
-            <div className="pos-due"><span>Due (saved to customer)</span><b>{inr(due)}</b></div>
+            <>
+              <div className="pos-due"><span>Due (saved to customer)</span><b>{inr(due)}</b></div>
+              <div className="adm-field" style={{ marginTop: 10 }}>
+                <label className="adm-label" htmlFor="pos-due-date">Will pay by (reminder)</label>
+                <input id="pos-due-date" className="adm-input" type="date" min={todayIso()} value={customer.dueDate || ''}
+                  onChange={e => setCustomer(c => ({ ...c, dueDate: e.target.value }))} />
+              </div>
+            </>
           )}
 
           <div className="adm-field" style={{ marginTop: 12 }}>

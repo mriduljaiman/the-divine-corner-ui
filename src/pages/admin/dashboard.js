@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   FiTrendingUp, FiCalendar, FiPercent, FiAlertCircle, FiUsers, FiShoppingBag, FiPackage, FiDollarSign,
-  FiMaximize, FiTag, FiTruck, FiPlus, FiRefreshCw, FiFileText,
+  FiMaximize, FiTag, FiTruck, FiPlus, FiRefreshCw, FiFileText, FiBell,
 } from 'react-icons/fi';
 import { adminLayout } from '../../components/admin/AdminLayout';
 import SalesChart from '../../components/admin/SalesChart';
 import { adminService } from '../../services/adminService';
 import { inr, fmtDate, apiError } from '../../utils/format';
+import { needsReminder, DUE_STATUS, promiseText } from '../../utils/dues';
 
 function Kpi({ label, value, sub, icon: Icon, tone = 'primary', href, hero }) {
   const body = (
@@ -28,6 +29,7 @@ function Kpi({ label, value, sub, icon: Icon, tone = 'primary', href, hero }) {
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [recent, setRecent] = useState([]);
+  const [reminders, setReminders] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -35,9 +37,10 @@ export default function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
-      const [a, d] = await Promise.all([adminService.analytics(), adminService.legacyDashboard()]);
+      const [a, d, du] = await Promise.all([adminService.analytics(), adminService.legacyDashboard(), adminService.dues().catch(() => ({ data: [] }))]);
       setData(a.data);
       setRecent(d.data.recentOrders || []);
+      setReminders((du.data || []).filter(needsReminder));
     } catch (err) {
       setError(apiError(err, 'Could not load dashboard'));
     } finally {
@@ -101,6 +104,30 @@ export default function AdminDashboard() {
         <Kpi label="Low stock" value={data.lowStockProducts} icon={FiPackage} tone="danger"
           sub={`${data.activeProducts} active products`} href="/admin/inventory" />
       </div>
+
+      {reminders.length > 0 && (
+        <section className="adm-card" style={{ marginTop: 16, borderColor: '#fecdd3', background: 'linear-gradient(135deg, #fff5f6, #fff)' }}>
+          <div className="adm-card-head">
+            <div>
+              <h2 className="adm-card-title"><FiBell style={{ verticalAlign: -2, color: 'var(--adm-danger)' }} /> Remind today ({reminders.length})</h2>
+              <div className="adm-card-sub">Overdue promises, payments due today and dues older than 30 days</div>
+            </div>
+            <Link href="/admin/dues" className="adm-btn sm">Open dues</Link>
+          </div>
+          <div className="adm-list">
+            {reminders.slice(0, 5).map(d => (
+              <Link key={d.customerPhone} href={`/admin/dues/${d.customerPhone}`} className="adm-list-item">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="adm-truncate" style={{ fontWeight: 700 }}>{d.customerName || d.customerPhone}</div>
+                  <div className="adm-card-sub">{promiseText(d.nextDueDate)} · {d.daysOutstanding} days old</div>
+                </div>
+                <span className={`adm-badge ${DUE_STATUS[d.status].tone}`}>{DUE_STATUS[d.status].label}</span>
+                <b className="text-danger" style={{ minWidth: 80, textAlign: 'right' }}>{inr(d.totalDue)}</b>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="adm-grid adm-grid-main" style={{ marginTop: 16 }}>
         <section className="adm-card">

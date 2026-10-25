@@ -894,3 +894,20 @@ a.adm-kpi:hover {
   .adm-page-head h1 { font-size: 1.25rem; }
   .adm-table th, .adm-table td { padding: 11px 12px; }
 }
+
+.adm-bottom-badge {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  margin-left: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--adm-danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
