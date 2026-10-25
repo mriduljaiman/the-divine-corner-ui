@@ -4,9 +4,8 @@
 import { inr } from './format';
 
 export const SHEETS = {
-  // compact labels: 4 per row (3 when a QR sits next to the bars). The column gap keeps the
-  // Code128 quiet zone (10 modules) on both sides of every label.
-  a4: { label: 'A4 sheet · 4 per row', page: [210, 297], margin: 10, cols: 4, colsWithQr: 3, gapX: 7 },
+  // compact labels, 4 per row; the column gap keeps the Code128 quiet zone (10 modules) on both sides
+  a4: { label: 'A4 sheet · 4 per row', page: [210, 297], margin: 10, cols: 4, gapX: 7 },
   roll: { label: 'Thermal roll · 50 × 25 mm', page: [50, 25], margin: 1.5, cols: 1, gapX: 0 },
 };
 
@@ -29,7 +28,7 @@ function cellHeight(opts) {
 export function planA4(sections, opts = {}) {
   const s = SHEETS.a4;
   const [pw, ph] = s.page;
-  const cols = opts.showQr ? s.colsWithQr : s.cols;
+  const cols = s.cols;
   const usableW = pw - 2 * s.margin;
   const cellW = (usableW - (cols - 1) * s.gapX) / cols;
   const cellH = cellHeight(opts);
@@ -81,15 +80,6 @@ async function barcodePng(code, cache) {
   return png;
 }
 
-async function qrPng(url, cache) {
-  const key = 'qr:' + url;
-  if (cache.has(key)) return cache.get(key);
-  const { default: QRCode } = await import('qrcode');
-  const data = await QRCode.toDataURL(url, { margin: 0, width: 300, errorCorrectionLevel: 'M' });
-  cache.set(key, data);
-  return data;
-}
-
 function truncate(doc, text, maxW) {
   if (doc.getTextWidth(text) <= maxW) return text;
   let t = text;
@@ -98,17 +88,11 @@ function truncate(doc, text, maxW) {
 }
 
 /** Draw one label inside the box (x, y, w, h). */
-async function drawLabel(doc, product, box, opts, cache, siteUrl) {
-  let { x, y, w } = box;
+async function drawLabel(doc, product, box, opts, cache) {
+  const { x, w } = box;
+  let { y } = box;
   const barH = box.barH ?? BAR_H;
   const codeH = box.codeH ?? CODE_H;
-  if (opts.showQr) {
-    const size = (opts.showInfo ? INFO_H : 0) + barH + codeH - 1;
-    doc.addImage(await qrPng(`${siteUrl}/p/${encodeURIComponent(product.barcode)}`, cache), 'PNG', x, y, size, size);
-    // keep 4mm between QR and bars so the QR never sits in the barcode's quiet zone
-    x += size + 4;
-    w -= size + 4;
-  }
   if (opts.showInfo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
@@ -129,9 +113,9 @@ async function drawLabel(doc, product, box, opts, cache, siteUrl) {
  * Build the PDF. sections: [{ product, copies }] (product needs name, barcode, price/discountPrice).
  * Returns a jsPDF document; call .save(name) or .output('bloburl').
  */
-export async function buildLabelPdf(sections, { sheet = 'a4', showInfo = false, showQr = false, siteUrl = '' } = {}) {
+export async function buildLabelPdf(sections, { sheet = 'a4', showInfo = false } = {}) {
   const { jsPDF } = await import('jspdf');
-  const opts = { showInfo, showQr };
+  const opts = { showInfo };
   const cache = new Map();
   const cfg = SHEETS[sheet];
   const [pw, ph] = cfg.page;
@@ -147,7 +131,7 @@ export async function buildLabelPdf(sections, { sheet = 'a4', showInfo = false, 
         const m = cfg.margin;
         const codeH = 3.6;
         const barH = ph - 2 * m - codeH - (showInfo ? INFO_H : 0);
-        await drawLabel(doc, product, { x: m + 1, y: m, w: pw - 2 * m - 2, barH, codeH }, opts, cache, siteUrl);
+        await drawLabel(doc, product, { x: m + 1, y: m, w: pw - 2 * m - 2, barH, codeH }, opts, cache);
       }
     }
     return doc;
@@ -166,7 +150,7 @@ export async function buildLabelPdf(sections, { sheet = 'a4', showInfo = false, 
         doc.line(item.x, item.y + 5.6, pw - cfg.margin, item.y + 5.6);
         doc.setTextColor(0);
       } else {
-        await drawLabel(doc, item.product, item, opts, cache, siteUrl);
+        await drawLabel(doc, item.product, item, opts, cache);
       }
     }
     doc.setFontSize(7);
