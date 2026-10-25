@@ -6,7 +6,7 @@
  */
 export function cloudinaryPad(url, w = 800, h = 1067) {
   if (!url || !url.includes('res.cloudinary.com')) return url;
-  const transform = `c_pad,w_${w},h_${h},b_white,q_75,f_jpg`;
+  const transform = `c_pad,w_${w},h_${h},b_white,q_auto,f_auto`;
   // Replace existing transformation (segment between /upload/ and rest of path that contains _)
   const replaced = url.replace(/\/image\/upload\/c_[^/]+\//, `/image/upload/${transform}/`);
   // If no transformation was in URL, insert after /upload/

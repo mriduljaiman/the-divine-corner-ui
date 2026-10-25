@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import css from 'styled-jsx/css';
-import { FiMapPin, FiPhone, FiMail, FiCheckCircle, FiShield, FiTruck, FiDollarSign } from 'react-icons/fi';
+import { FiMapPin, FiPhone, FiMail, FiCheckCircle, FiShield, FiTruck } from 'react-icons/fi';
+import { MdCurrencyRupee } from 'react-icons/md';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/orderService';
@@ -153,7 +154,7 @@ export default function CheckoutPage() {
             </section>
 
             <section className="co-card">
-              <h2><FiDollarSign /> Payment method</h2>
+              <h2><MdCurrencyRupee /> Payment method</h2>
               <div className="cod">
                 <FiCheckCircle />
                 <div>

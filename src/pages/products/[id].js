@@ -140,7 +140,7 @@ export default function ProductDetail() {
             <div className="pd-main-image">
               {images.length > 0 && !imageError[activeImage] ? (
                 <img
-                  src={cloudinaryPad(images[activeImage])}
+                  src={cloudinaryPad(images[activeImage], 720, 960)}
                   alt={product.name}
                   onError={() => setImageError(prev => ({ ...prev, [activeImage]: true }))}
                 />

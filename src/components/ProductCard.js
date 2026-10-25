@@ -43,7 +43,7 @@ const ProductCard = ({ product }) => {
     : 0;
 
   const imageUrl = product.images && product.images.length > 0
-    ? cloudinaryPad(product.images[0])
+    ? cloudinaryPad(product.images[0], 400, 533)
     : null;
 
   return (
@@ -58,6 +58,9 @@ const ProductCard = ({ product }) => {
               className="meesho-img"
               onError={() => setImageError(true)}
               loading="lazy"
+              decoding="async"
+              width={400}
+              height={533}
             />
           ) : (
             <div className="meesho-no-img">

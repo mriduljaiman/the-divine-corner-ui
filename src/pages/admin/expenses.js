@@ -1,6 +1,7 @@
 // ============ pages/admin/expenses.js ============
 import { useEffect, useMemo, useState } from 'react';
-import { FiPlus, FiTrash2, FiEdit2, FiX, FiDollarSign } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiEdit2, FiX } from 'react-icons/fi';
+import { MdCurrencyRupee } from 'react-icons/md';
 import { adminLayout } from '../../components/admin/AdminLayout';
 import { adminService } from '../../services/adminService';
 import { showToast } from '../../utils/toast';
@@ -87,7 +88,7 @@ export default function ExpensesPage() {
         <section>
           {!items ? <div className="adm-skel" style={{ height: 260 }} /> : items.length === 0 ? (
             <div className="adm-card adm-empty">
-              <FiDollarSign />
+              <MdCurrencyRupee />
               <h3>No expenses in {range.label}</h3>
               <button className="adm-btn primary" onClick={() => setForm(empty())}><FiPlus /> Add expense</button>
             </div>

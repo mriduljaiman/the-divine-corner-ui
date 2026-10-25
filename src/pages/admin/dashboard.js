@@ -2,9 +2,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  FiTrendingUp, FiCalendar, FiPercent, FiAlertCircle, FiUsers, FiShoppingBag, FiPackage, FiDollarSign,
-  FiMaximize, FiTag, FiTruck, FiPlus, FiRefreshCw, FiFileText, FiBell,
+  FiTrendingUp, FiCalendar, FiPercent, FiAlertCircle, FiUsers, FiShoppingBag, FiPackage, FiMaximize, FiTag, FiTruck, FiPlus, FiRefreshCw, FiFileText, FiBell,
 } from 'react-icons/fi';
+import { MdCurrencyRupee } from 'react-icons/md';
 import { adminLayout } from '../../components/admin/AdminLayout';
 import SalesChart from '../../components/admin/SalesChart';
 import { adminService } from '../../services/adminService';
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
           sub={`Gross ${inr(m.grossProfit)} − expenses ${inr(m.expenses)}`} href="/admin/expenses" />
         <Kpi label="Outstanding dues" value={inr(data.outstandingDue)} icon={FiAlertCircle} tone="danger"
           sub={`${data.dueCustomers} customer${data.dueCustomers === 1 ? '' : 's'} to collect from`} href="/admin/dues" />
-        <Kpi label="Cash collected today" value={inr(t.collected)} icon={FiDollarSign} tone="success"
+        <Kpi label="Cash collected today" value={inr(t.collected)} icon={MdCurrencyRupee} tone="success"
           sub={`Today's profit ${inr(t.grossProfit)}`} />
         <Kpi label="Registered customers" value={data.totalCustomers} icon={FiUsers} tone="primary"
           sub={`+${data.newCustomersThisMonth} this month`} href="/admin/customers" />
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
             <Link href="/admin/products/new" className="adm-btn"><FiPlus /> Add product</Link>
             <Link href="/admin/barcodes" className="adm-btn"><FiTag /> Print labels</Link>
             <Link href="/admin/stock-in" className="adm-btn"><FiTruck /> Stock in</Link>
-            <Link href="/admin/expenses" className="adm-btn"><FiDollarSign /> Add expense</Link>
+            <Link href="/admin/expenses" className="adm-btn"><MdCurrencyRupee /> Add expense</Link>
             <Link href="/admin/bills" className="adm-btn"><FiFileText /> All bills</Link>
           </div>
           <hr className="adm-divider" />

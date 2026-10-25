@@ -1,9 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { FiUploadCloud, FiX, FiAlertCircle } from 'react-icons/fi';
-import { compressImage } from '../utils/compressImage';
+import { compressImage, MAX_IMAGE_KB } from '../utils/compressImage';
 
-const TARGET_SIZE_KB = 10;
 
 const ImageUpload = ({
   onUploadComplete,
@@ -81,7 +80,7 @@ const ImageUpload = ({
       onUploadComplete(results);
       setPreviews([]);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Upload failed. Please try again.';
+      const errorMessage = err.response?.data?.message || err.message || 'Upload failed. Please try again.';
       setError(errorMessage);
       if (onUploadError) {
         onUploadError(errorMessage);
@@ -211,7 +210,7 @@ const ImageUpload = ({
             </p>
             <p className="drop-zone-hint">
               {multiple ? `Up to ${maxFiles} images, ` : ''}
-              Auto-compressed to under {TARGET_SIZE_KB}KB (JPEG, PNG, GIF, WebP)
+              Every photo is compressed to {MAX_IMAGE_KB}KB or less (JPEG, PNG, WebP)
             </p>
           </div>
         )}

@@ -1,46 +1,52 @@
-const TARGET_KB = 40;
+// Every product photo must be at most 20KB before it goes to Cloudinary (the server enforces
+// the same limit). Quality is lowered first; if that is not enough the picture is scaled down.
+export const MAX_IMAGE_KB = 20;
+const MAX_BYTES = MAX_IMAGE_KB * 1024;
 const MAX_WIDTH = 800;
 const MAX_HEIGHT = 1067; // 3:4 ratio
+const QUALITIES = [0.85, 0.78, 0.7, 0.62, 0.55, 0.48, 0.42, 0.36];
+const MIN_SIDE = 120;
 
-export function compressImage(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
+const toBlob = (canvas, quality) => new Promise((resolve, reject) => {
+  canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Could not encode image'))), 'image/jpeg', quality);
+});
 
-        // Resize to fit within 800×1067 maintaining aspect ratio
-        const widthRatio = MAX_WIDTH / width;
-        const heightRatio = MAX_HEIGHT / height;
-        const scale = Math.min(1, widthRatio, heightRatio);
-        width = Math.round(width * scale);
-        height = Math.round(height * scale);
+const loadImage = (file) => new Promise((resolve, reject) => {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+  img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`${file.name} is not a readable image`)); };
+  img.src = url;
+});
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0, width, height);
+export async function compressImage(file) {
+  const img = await loadImage(file);
+  let scale = Math.min(1, MAX_WIDTH / img.width, MAX_HEIGHT / img.height);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const outputName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
 
-        const outputName = file.name.replace(/\.[^.]+$/, '.jpg');
+  for (;;) {
+    const width = Math.max(1, Math.round(img.width * scale));
+    const height = Math.max(1, Math.round(img.height * scale));
+    canvas.width = width;
+    canvas.height = height;
+    ctx.fillStyle = '#ffffff'; // JPEG has no transparency
+    ctx.fillRect(0, 0, width, height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, width, height);
 
-        const tryCompress = (quality) => {
-          canvas.toBlob((blob) => {
-            if (blob.size <= TARGET_KB * 1024 || quality <= 0.5) {
-              resolve(new File([blob], outputName, { type: 'image/jpeg' }));
-            } else {
-              tryCompress(+(quality - 0.05).toFixed(2));
-            }
-          }, 'image/jpeg', quality);
-        };
-
-        tryCompress(0.85);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+    for (const q of QUALITIES) {
+      const blob = await toBlob(canvas, q);
+      if (blob.size <= MAX_BYTES) {
+        return new File([blob], outputName, { type: 'image/jpeg' });
+      }
+    }
+    if (Math.min(width, height) <= MIN_SIDE) {
+      const blob = await toBlob(canvas, 0.25);
+      if (blob.size <= MAX_BYTES) return new File([blob], outputName, { type: 'image/jpeg' });
+      throw new Error(`Could not compress ${file.name} under ${MAX_IMAGE_KB}KB`);
+    }
+    scale *= 0.85;
+  }
 }

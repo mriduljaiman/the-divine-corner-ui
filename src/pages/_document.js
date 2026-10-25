@@ -40,12 +40,15 @@ export default function Document() {
 
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
+        {process.env.NEXT_PUBLIC_API_URL?.startsWith('http') && (
+          <link rel="preconnect" href={new URL(process.env.NEXT_PUBLIC_API_URL).origin} crossOrigin="anonymous" />
+        )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
         {/* Google Fonts - Inter */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
       </Head>

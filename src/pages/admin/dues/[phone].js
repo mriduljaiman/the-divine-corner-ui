@@ -2,7 +2,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { FiArrowLeft, FiPhone, FiPrinter, FiPlus, FiCheckCircle, FiCalendar, FiDollarSign, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiPhone, FiPrinter, FiPlus, FiCheckCircle, FiCalendar, FiX } from 'react-icons/fi';
+import { MdCurrencyRupee } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 import { adminLayout } from '../../../components/admin/AdminLayout';
 import PaymentForm from '../../../components/admin/PaymentForm';
@@ -130,7 +131,7 @@ export default function CustomerKhata() {
               <div className="kh-amount">{inr(balance)}</div>
               <div className="kh-promise"><FiCalendar /> {promiseText(ledger.nextDueDate)}</div>
               <div className="kh-actions">
-                <button className="adm-btn success lg" onClick={() => setPayOpen(true)}><FiDollarSign /> Receive payment</button>
+                <button className="adm-btn success lg" onClick={() => setPayOpen(true)}><MdCurrencyRupee /> Receive payment</button>
                 <button className="adm-btn whatsapp lg" onClick={sendReminder}><FaWhatsapp /> Remind</button>
                 <button className="adm-btn lg" onClick={() => { setPromise(ledger.nextDueDate || ''); setDateOpen(true); }}><FiCalendar /> Promise date</button>
               </div>

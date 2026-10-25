@@ -1,35 +1,13 @@
-// ============ pages/admin/barcodes.js — bulk barcode / QR label generator ============
+// ============ pages/admin/barcodes.js — bulk barcode label PDF ============
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FiPrinter, FiSearch, FiTag, FiTrash2, FiLayers, FiPackage } from 'react-icons/fi';
+import { FiDownload, FiPrinter, FiSearch, FiTag, FiTrash2, FiLayers, FiPackage, FiFileText } from 'react-icons/fi';
 import { adminLayout } from '../../components/admin/AdminLayout';
 import { adminService } from '../../services/adminService';
 import { showToast } from '../../utils/toast';
-import { inr, apiError } from '../../utils/format';
+import { inr, apiError, todayIso } from '../../utils/format';
+import { SHEETS, countPages, buildLabelPdf } from '../../utils/labelPdf';
 
-const MAX_LABELS = 2000;
-const SIZES = {
-  a4: { label: 'A4 sheet · 3 × 8 (64 × 34 mm)', page: '@page { size: A4; margin: 8mm 6mm; }' },
-  roll: { label: 'Thermal roll · 50 × 25 mm', page: '@page { size: 50mm 25mm; margin: 0; }' },
-};
-
-/** Builds QR + Code128 images once per product (memoised by product id + code). */
-async function renderCodes(products, siteUrl, cache) {
-  const [{ default: QRCode }, { default: JsBarcode }] = await Promise.all([import('qrcode'), import('jsbarcode')]);
-  const out = {};
-  for (const p of products) {
-    const key = `${p.id}:${p.barcode}`;
-    if (!cache.has(key)) {
-      const qr = await QRCode.toDataURL(`${siteUrl}/p/${encodeURIComponent(p.barcode)}`, {
-        margin: 0, width: 220, errorCorrectionLevel: 'M',
-      });
-      const canvas = document.createElement('canvas');
-      JsBarcode(canvas, p.barcode, { format: 'CODE128', displayValue: false, margin: 0, height: 60, width: 2 });
-      cache.set(key, { qr, bar: canvas.toDataURL('image/png') });
-    }
-    out[p.id] = cache.get(key);
-  }
-  return out;
-}
+const MAX_LABELS = 3000;
 
 export default function BarcodesPage() {
   const [mode, setMode] = useState('category');
@@ -38,11 +16,13 @@ export default function BarcodesPage() {
   const [rows, setRows] = useState([]);           // { product, copies, include }
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [size, setSize] = useState('a4');
-  const [showPrice, setShowPrice] = useState(true);
-  const [images, setImages] = useState({});
+  const [sheet, setSheet] = useState('a4');
+  const [showInfo, setShowInfo] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [loading, setLoading] = useState(false);
-  const cacheRef = useRef(new Map());
+  const [busy, setBusy] = useState('');
+  const [preview, setPreview] = useState({});
+  const previewCache = useRef(new Map());
 
   useEffect(() => {
     adminService.categories().then(r => setCategories(r.data || [])).catch(() => {});
@@ -67,7 +47,7 @@ export default function BarcodesPage() {
     return () => clearTimeout(t);
   }, [query, mode]);
 
-  const switchMode = (m) => { setMode(m); setRows([]); setImages({}); setCategoryId(''); setQuery(''); };
+  const switchMode = (m) => { setMode(m); setRows([]); setCategoryId(''); setQuery(''); };
 
   const addPicked = (p) => {
     setRows(r => (r.some(x => x.product.id === p.id) ? r : [...r, { product: p, copies: Math.max(1, p.stockQuantity), include: true }]));
@@ -75,50 +55,76 @@ export default function BarcodesPage() {
     setResults([]);
   };
 
-  const selected = rows.filter(r => r.include && r.copies > 0 && r.product.barcode);
-  const totalLabels = selected.reduce((s, r) => s + Number(r.copies), 0);
+  const setRow = (id, patch) => setRows(rs => rs.map(r => (r.product.id === id ? { ...r, ...patch } : r)));
+  const allChecked = rows.length > 0 && rows.every(r => r.include);
+
+  const sections = useMemo(
+    () => rows.filter(r => r.include && r.copies > 0 && r.product.barcode).map(r => ({ product: r.product, copies: Number(r.copies) })),
+    [rows],
+  );
+  const totalLabels = sections.reduce((s, x) => s + x.copies, 0);
+  const pages = useMemo(() => countPages(sections, sheet, { showInfo }), [sections, sheet, showInfo]);
   const missingCode = rows.filter(r => r.include && !r.product.barcode).length;
 
-  // regenerate images when the selection changes
+  // small on-screen preview of the first few products
   useEffect(() => {
-    if (!selected.length) { setImages({}); return; }
     let alive = true;
-    renderCodes(selected.map(r => r.product), window.location.origin, cacheRef.current)
-      .then(imgs => alive && setImages(imgs))
-      .catch(() => alive && showToast.error('Could not generate codes'));
+    (async () => {
+      const { default: JsBarcode } = await import('jsbarcode');
+      const out = {};
+      for (const { product } of sections.slice(0, 4)) {
+        if (!previewCache.current.has(product.barcode)) {
+          const c = document.createElement('canvas');
+          JsBarcode(c, product.barcode, { format: 'CODE128', displayValue: false, margin: 0, width: 2, height: 50 });
+          previewCache.current.set(product.barcode, c.toDataURL('image/png'));
+        }
+        out[product.barcode] = previewCache.current.get(product.barcode);
+      }
+      if (alive) setPreview(out);
+    })().catch(() => {});
     return () => { alive = false; };
-  }, [selected.map(r => r.product.id).join(',')]);
+  }, [sections]);
 
-  const labels = useMemo(() => {
-    const out = [];
-    for (const r of selected) {
-      for (let i = 0; i < r.copies && out.length < MAX_LABELS; i++) out.push(r.product);
+  const makePdf = async (action) => {
+    if (!sections.length) { showToast.error('Tick at least one product with quantity'); return; }
+    if (totalLabels > MAX_LABELS) { showToast.error(`Too many labels at once (max ${MAX_LABELS}). Split into smaller batches.`); return; }
+    setBusy(action);
+    try {
+      const doc = await buildLabelPdf(sections, { sheet, showInfo, showQr, siteUrl: window.location.origin });
+      const name = `divine-corner-labels-${todayIso()}.pdf`;
+      if (action === 'download') {
+        doc.save(name);
+        showToast.success(`PDF ready: ${totalLabels} labels on ${pages} page${pages === 1 ? '' : 's'}`);
+      } else {
+        const url = doc.output('bloburl');
+        const w = window.open(url, '_blank');
+        if (!w) doc.save(name); // popup blocked: fall back to download
+      }
+    } catch (err) {
+      showToast.error(err.message || 'Could not create the PDF');
+    } finally {
+      setBusy('');
     }
-    return out;
-  }, [selected]);
-
-  const print = () => {
-    if (!labels.length) { showToast.error('Select at least one product with quantity'); return; }
-    if (totalLabels > MAX_LABELS) showToast.warning(`Only the first ${MAX_LABELS} labels will print`);
-    window.print();
   };
-
-  const setRow = (id, patch) => setRows(rs => rs.map(r => (r.product.id === id ? { ...r, ...patch } : r)));
 
   return (
     <>
-      <style>{SIZES[size].page}</style>
-      <div className="adm-page-head adm-no-print">
+      <div className="adm-page-head">
         <div>
           <h1>Barcode labels</h1>
-          <p>Print one label per piece in stock. Scanning a label in the admin app adds it to the bill; customers scanning it land on the product page.</p>
+          <p>Tick products, set how many labels each needs, then download one PDF — one section per product.</p>
         </div>
-        <button className="adm-btn primary lg" onClick={print} disabled={!labels.length}>
-          <FiPrinter /> Print {totalLabels ? `${Math.min(totalLabels, MAX_LABELS)} labels` : ''}
-        </button>
+        <div className="adm-actions">
+          <button className="adm-btn" onClick={() => makePdf('print')} disabled={!sections.length || !!busy}>
+            <FiPrinter /> {busy === 'print' ? 'Preparing…' : 'Print'}
+          </button>
+          <button className="adm-btn primary lg" onClick={() => makePdf('download')} disabled={!sections.length || !!busy}>
+            <FiDownload /> {busy === 'download' ? 'Creating PDF…' : `Download PDF${totalLabels ? ` · ${totalLabels} label${totalLabels === 1 ? '' : 's'}` : ''}`}
+          </button>
+        </div>
       </div>
 
-      <div className="adm-grid adm-grid-main adm-no-print">
+      <div className="adm-grid adm-grid-main">
         <section className="adm-card">
           <div className="adm-tabs" style={{ marginBottom: 14 }}>
             <button className={`adm-tab ${mode === 'category' ? 'active' : ''}`} onClick={() => switchMode('category')}><FiLayers /> By category</button>
@@ -154,7 +160,16 @@ export default function BarcodesPage() {
           ) : (
             <div className="adm-table-wrap" style={{ marginTop: 14 }}>
               <table className="adm-table">
-                <thead><tr><th /><th>Product</th><th className="num">Stock</th><th className="num">Labels</th><th /></tr></thead>
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" checked={allChecked} aria-label="Select all"
+                      onChange={e => setRows(rs => rs.map(r => ({ ...r, include: e.target.checked })))} /></th>
+                    <th>Product</th>
+                    <th className="num">Stock</th>
+                    <th className="num">Labels</th>
+                    <th />
+                  </tr>
+                </thead>
                 <tbody>
                   {rows.map(({ product: p, copies, include }) => (
                     <tr key={p.id}>
@@ -165,8 +180,8 @@ export default function BarcodesPage() {
                       </td>
                       <td className="num">{p.stockQuantity}</td>
                       <td className="num">
-                        <input className="adm-input" type="number" min="0" max="500" style={{ width: 80, height: 36, textAlign: 'right' }}
-                          value={copies} onChange={e => setRow(p.id, { copies: Math.max(0, Math.min(500, parseInt(e.target.value || '0', 10))) })}
+                        <input className="adm-input" type="number" min="0" max="999" style={{ width: 84, height: 36, textAlign: 'right' }}
+                          value={copies} onChange={e => setRow(p.id, { copies: Math.max(0, Math.min(999, parseInt(e.target.value || '0', 10))) })}
                           aria-label={`Labels for ${p.name}`} />
                       </td>
                       <td>
@@ -183,39 +198,49 @@ export default function BarcodesPage() {
         </section>
 
         <section className="adm-card">
-          <h2 className="adm-card-title" style={{ marginBottom: 12 }}>Label settings</h2>
+          <h2 className="adm-card-title" style={{ marginBottom: 12 }}>PDF settings</h2>
           <div className="adm-field">
             <label className="adm-label">Paper</label>
-            {Object.entries(SIZES).map(([k, v]) => (
-              <label key={k} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.9rem', padding: '4px 0' }}>
-                <input type="radio" name="size" checked={size === k} onChange={() => setSize(k)} /> {v.label}
+            {Object.entries(SHEETS).map(([k, v]) => (
+              <label key={k} className="bc-opt">
+                <input type="radio" name="sheet" checked={sheet === k} onChange={() => setSheet(k)} /> {v.label}
               </label>
             ))}
           </div>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.9rem', marginTop: 12 }}>
-            <input type="checkbox" checked={showPrice} onChange={e => setShowPrice(e.target.checked)} /> Print selling price
-          </label>
+          <div className="adm-field">
+            <label className="adm-label">On each label</label>
+            <label className="bc-opt"><input type="checkbox" checked disabled /> Barcode + code</label>
+            <label className="bc-opt"><input type="checkbox" checked={showInfo} onChange={e => setShowInfo(e.target.checked)} /> Product name &amp; price</label>
+            <label className="bc-opt"><input type="checkbox" checked={showQr} onChange={e => setShowQr(e.target.checked)} /> QR code (customers scan with Google Lens → product page)</label>
+          </div>
           <hr className="adm-divider" />
-          <div className="adm-row"><span className="text-muted">Products</span><b>{selected.length}</b></div>
+          <div className="adm-row"><span className="text-muted">Products ticked</span><b>{sections.length}</b></div>
           <div className="adm-row"><span className="text-muted">Labels</span><b>{totalLabels}</b></div>
+          <div className="adm-row"><span className="text-muted">PDF pages</span><b>{pages}</b></div>
           {missingCode > 0 && <div className="adm-error-text">{missingCode} product(s) have no barcode and will be skipped.</div>}
-          <p className="adm-hint" style={{ marginTop: 10 }}>Tip: choose &quot;Save as PDF&quot; in the print dialog to download the labels.</p>
-          {labels[0] && images[labels[0].id] && (
+
+          {sections.length > 0 && (
             <>
-              <div className="adm-label" style={{ marginTop: 12 }}>Preview</div>
-              <div className={`bc-sheet ${size}`} style={{ marginTop: 6 }}>
-                <Label p={labels[0]} img={images[labels[0].id]} showPrice={showPrice} />
+              <div className="adm-label" style={{ marginTop: 14 }}><FiFileText style={{ verticalAlign: -2 }} /> Preview</div>
+              <div className="bc-preview">
+                {sections.slice(0, 2).map(({ product, copies }) => (
+                  <div key={product.id}>
+                    <div className="bc-prev-head">{product.name} · {copies} label{copies === 1 ? '' : 's'}</div>
+                    <div className="bc-prev-grid">
+                      {Array.from({ length: Math.min(3, copies) }).map((_, i) => (
+                        <div key={i} className="bc-prev-label">
+                          {showInfo && <div className="bc-prev-name">{product.name}</div>}
+                          {preview[product.barcode] && <img src={preview[product.barcode]} alt="" />}
+                          <div className="bc-prev-code">{product.barcode}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}
         </section>
-      </div>
-
-      {/* what actually gets printed */}
-      <div className="adm-print-area adm-print-only">
-        <div className={`bc-sheet ${size}`}>
-          {labels.map((p, i) => images[p.id] && <Label key={i} p={p} img={images[p.id]} showPrice={showPrice} />)}
-        </div>
       </div>
 
       <style jsx global>{`
@@ -224,48 +249,15 @@ export default function BarcodesPage() {
         .bc-results button { width: 100%; display: flex; gap: 10px; padding: 10px 14px; border: none; background: #fff; cursor: pointer;
           border-bottom: 1px solid #f0f2f7; font-size: 0.9rem; }
         .bc-results button:hover { background: var(--adm-primary-soft); }
-
-        .bc-sheet.a4 { display: grid; grid-template-columns: repeat(3, 64mm); gap: 0 2mm; }
-        .bc-sheet.roll { display: block; }
-        .bc-label {
-          box-sizing: border-box; display: flex; gap: 2mm; align-items: center; background: #fff; color: #000;
-          font-family: Arial, sans-serif; overflow: hidden; page-break-inside: avoid; break-inside: avoid;
-        }
-        .bc-sheet.a4 .bc-label { width: 64mm; height: 34mm; padding: 2.5mm 3mm; border: 0.2mm dashed #ccc; }
-        .bc-sheet.roll .bc-label { width: 50mm; height: 25mm; padding: 1.5mm 2mm; page-break-after: always; break-after: page; }
-        .bc-qr { flex-shrink: 0; }
-        .bc-sheet.a4 .bc-qr { width: 24mm; height: 24mm; }
-        .bc-sheet.roll .bc-qr { width: 19mm; height: 19mm; }
-        .bc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6mm; }
-        .bc-brand { font-size: 5.5pt; letter-spacing: 0.08em; font-weight: 700; color: #444; }
-        .bc-name { font-size: 7.5pt; font-weight: 700; line-height: 1.15; max-height: 2.3em; overflow: hidden; }
-        .bc-price { font-size: 10pt; font-weight: 800; }
-        .bc-bar { width: 100%; height: 6mm; object-fit: fill; }
-        .bc-code { font-size: 6.5pt; letter-spacing: 0.06em; }
-        .bc-sheet.roll .bc-name { font-size: 6.5pt; }
-        .bc-sheet.roll .bc-price { font-size: 9pt; }
-        .bc-sheet.roll .bc-bar { height: 4.5mm; }
-        @media print {
-          .adm-print-only { display: block !important; }
-          .bc-sheet.a4 .bc-label { border-color: #eee; }
-        }
+        .bc-opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.88rem; padding: 4px 0; }
+        .bc-preview { margin-top: 8px; padding: 12px; background: #fff; border: 1px dashed var(--adm-border); border-radius: 10px; }
+        .bc-prev-head { font-size: 0.72rem; font-weight: 700; color: #555; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; margin: 4px 0 8px; }
+        .bc-prev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+        .bc-prev-label img { width: 100%; height: 30px; object-fit: fill; display: block; }
+        .bc-prev-code { font-size: 0.62rem; letter-spacing: 0.06em; margin-top: 2px; }
+        .bc-prev-name { font-size: 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       `}</style>
     </>
-  );
-}
-
-function Label({ p, img, showPrice }) {
-  return (
-    <div className="bc-label">
-      <img className="bc-qr" src={img.qr} alt="" />
-      <div className="bc-info">
-        <div className="bc-brand">THE DIVINE CORNER</div>
-        <div className="bc-name">{p.name}</div>
-        {showPrice && <div className="bc-price">{inr(p.discountPrice || p.price)}</div>}
-        <img className="bc-bar" src={img.bar} alt="" />
-        <div className="bc-code">{p.barcode}</div>
-      </div>
-    </div>
   );
 }
 

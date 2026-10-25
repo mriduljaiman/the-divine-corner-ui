@@ -22,7 +22,7 @@ const METHODS = [['CASH', 'Cash'], ['UPI', 'UPI'], ['CARD', 'Card']];
 export default function PosPage() {
   const router = useRouter();
   const [lines, setLines] = useState([]);
-  const [customer, setCustomer] = useState({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '' });
+  const [customer, setCustomer] = useState({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '', finalPrice: '', shortfall: '' });
   const [hydrated, setHydrated] = useState(false);
   const [camera, setCamera] = useState(false);
   const [query, setQuery] = useState('');
@@ -163,8 +163,18 @@ export default function PosPage() {
   }, [phone]);
 
   const totals = useMemo(() => billTotals(lines), [lines]);
-  const paid = customer.fullPaid ? totals.total : Math.min(Number(customer.paid || 0), totals.total);
-  const due = Math.max(0, Math.round((totals.total - paid) * 100) / 100);
+  const r2 = (n) => Math.round(n * 100) / 100;
+  // Bargain on the whole bill: "₹30 ka saman, ₹20 final" -> ₹10 discount, nothing due
+  const finalNum = Number(customer.finalPrice);
+  const finalSet = customer.finalPrice !== '' && finalNum > 0 && finalNum < totals.total;
+  const priceDiscount = finalSet ? r2(totals.total - finalNum) : 0;
+  const priced = r2(totals.total - priceDiscount);
+  const received = customer.fullPaid ? priced : Math.min(Math.max(Number(customer.paid || 0), 0), priced);
+  const gap = r2(priced - received);
+  // When less money comes in, the cashier must say whether the rest is a bargain or udhaar
+  const billDiscount = r2(priceDiscount + (gap > 0 && customer.shortfall === 'DISCOUNT' ? gap : 0));
+  const payable = r2(totals.total - billDiscount);
+  const due = gap > 0 && customer.shortfall === 'DUE' ? gap : 0;
 
   const updateLine = (id, patch) => setLines(prev => prev.map(l => (l.productId === id ? { ...l, ...patch } : l)));
   const removeLine = (id) => setLines(prev => prev.filter(l => l.productId !== id));
@@ -178,8 +188,11 @@ export default function PosPage() {
     phone: !phone ? 'Enter a valid 10-digit mobile number' : '',
     lines: lines.length === 0 ? 'Scan or add at least one product' : '',
     price: lines.some(l => !(Number(l.unitPrice) > 0)) ? 'Every item needs a price' : '',
-    paid: !customer.fullPaid && (customer.paid === '' || Number(customer.paid) < 0 || Number(customer.paid) > totals.total)
-      ? `Received amount must be between ₹0 and ${inr(totals.total)}` : '',
+    finalPrice: customer.finalPrice !== '' && !(finalNum > 0 && finalNum <= totals.total)
+      ? `Final price must be between ₹1 and ${inr(totals.total)}` : '',
+    paid: !customer.fullPaid && (customer.paid === '' || Number(customer.paid) < 0 || Number(customer.paid) > priced)
+      ? `Received amount must be between ₹0 and ${inr(priced)}` : '',
+    shortfall: gap > 0 && !customer.shortfall ? `₹${gap} kam mila — choose: bargain discount or udhaar (due)` : '',
   };
   const invalid = Object.values(errors).some(Boolean);
 
@@ -192,7 +205,8 @@ export default function PosPage() {
         customerName: customer.name.trim() || null,
         customerPhone: phone,
         paymentMethod: customer.method,
-        amountPaid: paid,
+        amountPaid: received,
+        billDiscount: billDiscount > 0 ? billDiscount : null,
         notes: customer.notes.trim() || null,
         dueDate: due > 0 && customer.dueDate ? customer.dueDate : null,
         items: lines.map(l => ({ productId: l.productId, quantity: l.qty, unitPrice: Number(l.unitPrice) })),
@@ -200,7 +214,7 @@ export default function PosPage() {
       cacheRef.current.clear(); // stock changed
       clearDraft();
       setLines([]);
-      setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '' });
+      setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '', finalPrice: '', shortfall: '' });
       setTouched(false);
       setShowCost(new Set());
       invalidateDues();
@@ -216,7 +230,7 @@ export default function PosPage() {
   const clearAll = () => {
     if (lines.length && !confirm('Clear this bill?')) return;
     setLines([]);
-    setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '' });
+    setCustomer({ phone: '', name: '', notes: '', method: 'CASH', paid: '', fullPaid: true, dueDate: '', finalPrice: '', shortfall: '' });
     setTouched(false);
   };
 
@@ -387,7 +401,19 @@ export default function PosPage() {
             <div className="adm-row"><span className="text-muted">Profit on this bill</span>
               <span className={totals.profit < 0 ? 'text-danger' : 'text-success'}>{inr(totals.profit)}</span></div>
           )}
-          <div className="adm-row total"><span>Total</span><span>{inr(totals.total)}</span></div>
+          <div className="adm-row"><span className="text-muted">Items total</span><span>{inr(totals.total)}</span></div>
+
+          <div className="adm-field" style={{ marginTop: 8 }}>
+            <label className="adm-label" htmlFor="pos-final">Final price after bargain (optional)</label>
+            <input id="pos-final" className={`adm-input ${touched && errors.finalPrice ? 'invalid' : ''}`} type="number" inputMode="decimal"
+              min="0" step="0.01" placeholder={`e.g. ${Math.max(1, Math.floor(totals.total * 0.9))}`} value={customer.finalPrice}
+              onChange={e => setCustomer(c => ({ ...c, finalPrice: e.target.value }))} />
+            {touched && errors.finalPrice && <span className="adm-error-text">{errors.finalPrice}</span>}
+          </div>
+          {billDiscount > 0 && (
+            <div className="adm-row"><span className="text-muted">Bargain discount (not a due)</span><span className="text-success">− {inr(billDiscount)}</span></div>
+          )}
+          <div className="adm-row total"><span>Total</span><span>{inr(payable)}</span></div>
 
           <div className="adm-chips" style={{ margin: '12px 0' }}>
             {METHODS.map(([v, label]) => (
@@ -398,7 +424,7 @@ export default function PosPage() {
 
           <label className="pos-switch">
             <input type="checkbox" checked={customer.fullPaid}
-              onChange={e => setCustomer(c => ({ ...c, fullPaid: e.target.checked, paid: e.target.checked ? '' : String(totals.total) }))} />
+              onChange={e => setCustomer(c => ({ ...c, fullPaid: e.target.checked, shortfall: '', paid: e.target.checked ? '' : String(priced) }))} />
             <span>Paid in full</span>
           </label>
 
@@ -408,6 +434,17 @@ export default function PosPage() {
               <input id="pos-paid" className={`adm-input ${touched && errors.paid ? 'invalid' : ''}`} type="number" inputMode="decimal"
                 min="0" step="0.01" value={customer.paid} onChange={e => setCustomer(c => ({ ...c, paid: e.target.value }))} />
               {touched && errors.paid && <span className="adm-error-text">{errors.paid}</span>}
+            </div>
+          )}
+          {gap > 0 && (
+            <div className={`pos-gap ${touched && errors.shortfall ? 'invalid' : ''}`}>
+              <div><b>{inr(gap)}</b> kam mila — ye kya hai?</div>
+              <div className="pos-gap-btns">
+                <button type="button" className={`adm-chip ${customer.shortfall === 'DISCOUNT' ? 'active' : ''}`}
+                  onClick={() => setCustomer(c => ({ ...c, shortfall: 'DISCOUNT' }))}>Bargain discount</button>
+                <button type="button" className={`adm-chip ${customer.shortfall === 'DUE' ? 'active' : ''}`}
+                  onClick={() => setCustomer(c => ({ ...c, shortfall: 'DUE' }))}>Udhaar (due)</button>
+              </div>
             </div>
           )}
           {due > 0 && (
@@ -428,7 +465,7 @@ export default function PosPage() {
           </div>
 
           <button type="button" className="adm-btn primary lg block" style={{ marginTop: 16 }} onClick={saveBill} disabled={saving}>
-            <FiCheckCircle /> {saving ? 'Saving…' : `Save bill · ${inr(totals.total)}`}
+            <FiCheckCircle /> {saving ? 'Saving…' : `Save bill · ${inr(payable)}`}
           </button>
           <Link href="/admin/bills" className="adm-btn ghost block sm" style={{ marginTop: 8 }}><FiFileText /> Previous bills</Link>
         </div>
@@ -439,7 +476,7 @@ export default function PosPage() {
         <div className="pos-mobile-bar adm-no-print">
           <div>
             <div className="adm-card-sub">{totals.qty} items</div>
-            <b style={{ fontSize: '1.1rem' }}>{inr(totals.total)}</b>
+            <b style={{ fontSize: '1.1rem' }}>{inr(payable)}</b>
           </div>
           <button type="button" className="adm-btn primary" onClick={() => document.getElementById('pos-phone')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
             Checkout
@@ -502,6 +539,9 @@ export default function PosPage() {
         .pos-line-total s { font-size: 0.78rem; }
         .pos-switch { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
         .pos-switch input { width: 18px; height: 18px; accent-color: var(--adm-primary); }
+        .pos-gap { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--adm-accent-soft); border: 1.5px solid #fde68a; font-size: 0.9rem; }
+        .pos-gap.invalid { border-color: var(--adm-danger); }
+        .pos-gap-btns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
         .pos-due {
           display: flex; justify-content: space-between; margin-top: 12px; padding: 10px 12px; border-radius: 10px;
           background: var(--adm-danger-soft); color: var(--adm-danger); font-size: 0.9rem;

@@ -4,9 +4,10 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import {
   FiGrid, FiShoppingBag, FiFileText, FiAlertCircle, FiPackage, FiTag, FiLayers,
-  FiSearch, FiTruck, FiDollarSign, FiUsers, FiMenu, FiX, FiLogOut, FiExternalLink, FiMaximize,
+  FiSearch, FiTruck, FiUsers, FiMenu, FiX, FiLogOut, FiExternalLink, FiMaximize,
   FiShoppingCart, FiMoreHorizontal,
 } from 'react-icons/fi';
+import { MdCurrencyRupee } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { useDueReminders } from '../../utils/dues';
 
@@ -34,7 +35,7 @@ export const ADMIN_NAV = [
     items: [
       { href: '/admin/inventory', label: 'Inventory', icon: FiSearch },
       { href: '/admin/stock-in', label: 'Purchases / Stock In', icon: FiTruck },
-      { href: '/admin/expenses', label: 'Expenses', icon: FiDollarSign },
+      { href: '/admin/expenses', label: 'Expenses', icon: MdCurrencyRupee },
     ],
   },
   { title: 'People', items: [{ href: '/admin/customers', label: 'Customers', icon: FiUsers }] },

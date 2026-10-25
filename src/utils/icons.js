@@ -29,7 +29,6 @@ export {
   FiShoppingBag,
   FiPackage,
   FiCreditCard,
-  FiDollarSign,
   FiTag,
   FiPercent,
   FiGift,
@@ -142,6 +141,9 @@ export {
   FiTarget,
   FiBox,
 } from 'react-icons/fi';
+
+// Rupee symbol (the app is priced in INR, never $)
+export { MdCurrencyRupee } from 'react-icons/md';
 
 // Social Media Icons from Simple Icons
 export {

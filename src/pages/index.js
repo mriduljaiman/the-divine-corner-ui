@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
-import { FiTruck, FiShield, FiDollarSign, FiHeadphones, FiArrowRight } from 'react-icons/fi';
+import { FiTruck, FiShield, FiHeadphones, FiArrowRight } from 'react-icons/fi';
+import { MdCurrencyRupee } from 'react-icons/md';
 import ProductCard from '../components/ProductCard';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 
 const TRUST = [
-  { icon: FiDollarSign, title: 'Cash on Delivery', text: 'Pay when it arrives' },
+  { icon: MdCurrencyRupee, title: 'Cash on Delivery', text: 'Pay when it arrives' },
   { icon: FiTruck, title: 'Free delivery', text: 'On orders ₹500+' },
   { icon: FiShield, title: 'Genuine products', text: 'Handpicked with care' },
   { icon: FiHeadphones, title: 'Friendly support', text: 'Chat with us anytime' },

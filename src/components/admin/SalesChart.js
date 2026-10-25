@@ -51,7 +51,7 @@ export default function SalesChart({ data = [] }) {
             <rect x={b.x - 2} y={PAD_T} width={b.bw + 4} height={base - PAD_T} fill={hover === i ? '#f3f2ff' : 'transparent'} rx="4" />
             {b.hOff > 0 && <rect x={b.x} y={base - b.hOff} width={b.bw} height={b.hOff} fill={OFFLINE} rx="3" />}
             {b.hOn > 0 && <rect x={b.x} y={base - b.hOff - b.hOn} width={b.bw} height={b.hOn} fill={ONLINE} rx="3" />}
-            {(i % 7 === 0 || i === bars.length - 1) && (
+            {((i % 7 === 0 && bars.length - 1 - i >= 4) || i === bars.length - 1) && (
               <text x={b.x + b.bw / 2} y={H - 6} textAnchor="middle" fontSize="13" fill="#94a3b8">
                 {new Date(b.d.date + 'T00:00:00').getDate()}/{new Date(b.d.date + 'T00:00:00').getMonth() + 1}
               </text>

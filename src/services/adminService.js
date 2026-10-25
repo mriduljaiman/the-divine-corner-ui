@@ -22,6 +22,7 @@ export const adminService = {
   voidBill: (id, reason) => api.post(`/admin/pos/bills/${id}/void`, { reason }),
   dues: () => api.get('/admin/pos/dues'),
   manualDue: (data) => api.post('/admin/pos/dues/manual', data),
+  billDiscount: (billId, amount, note) => api.post(`/admin/pos/bills/${billId}/discount`, { amount, note: note || null }),
   setDueDate: (billId, dueDate) => api.put(`/admin/pos/bills/${billId}/due-date`, { dueDate: dueDate || null }),
   ledger: (phone) => api.get(`/admin/pos/customers/${encodeURIComponent(phone)}/ledger`),
   markReminded: (phone) => api.post(`/admin/pos/customers/${encodeURIComponent(phone)}/reminded`),

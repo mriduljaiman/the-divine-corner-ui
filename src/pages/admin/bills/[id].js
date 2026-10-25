@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { FiArrowLeft, FiDollarSign, FiSlash, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiSlash, FiX, FiPercent } from 'react-icons/fi';
+import { MdCurrencyRupee } from 'react-icons/md';
 import { adminLayout } from '../../../components/admin/AdminLayout';
 import BillShare from '../../../components/admin/BillShare';
 import PaymentForm from '../../../components/admin/PaymentForm';
@@ -17,6 +18,8 @@ export default function BillDetailPage() {
   const [bill, setBill] = useState(null);
   const [error, setError] = useState('');
   const [payOpen, setPayOpen] = useState(false);
+  const [discOpen, setDiscOpen] = useState(false);
+  const [disc, setDisc] = useState({ amount: '', note: '' });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -32,6 +35,27 @@ export default function BillDetailPage() {
       setPayOpen(false);
       invalidateDues();
       showToast.success(payload.writeOff ? 'Written off' : 'Payment recorded');
+    } catch (err) {
+      showToast.error(apiError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const giveDiscount = async (e) => {
+    e.preventDefault();
+    const amount = Number(disc.amount);
+    if (!(amount > 0) || amount > Number(bill.amountDue)) {
+      showToast.error(`Discount must be between ₹0 and ${inr(bill.amountDue)}`);
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data } = await adminService.billDiscount(bill.id, amount, disc.note);
+      setBill(data);
+      setDiscOpen(false);
+      invalidateDues();
+      showToast.success(`${inr(amount)} bargain discount applied`);
     } catch (err) {
       showToast.error(apiError(err));
     } finally {
@@ -67,7 +91,12 @@ export default function BillDetailPage() {
         <div className="adm-actions">
           {hasDue && !bill.voided && (
             <button className="adm-btn success" onClick={() => setPayOpen(true)}>
-              <FiDollarSign /> Receive due
+              <MdCurrencyRupee /> Receive due
+            </button>
+          )}
+          {hasDue && !bill.voided && (
+            <button className="adm-btn" onClick={() => { setDisc({ amount: String(bill.amountDue), note: '' }); setDiscOpen(true); }}>
+              <FiPercent /> Bargain discount
             </button>
           )}
           {!bill.voided && <button className="adm-btn danger" onClick={voidIt}><FiSlash /> Void bill</button>}
@@ -109,6 +138,38 @@ export default function BillDetailPage() {
           </div>
         </div>
       </div>
+
+      {discOpen && (
+        <div className="adm-modal-backdrop" onClick={() => setDiscOpen(false)}>
+          <form className="adm-modal" onClick={e => e.stopPropagation()} onSubmit={giveDiscount} aria-label="Bargain discount">
+            <div className="adm-modal-head">
+              <h3>Bargain discount</h3>
+              <button type="button" className="adm-icon-btn" onClick={() => setDiscOpen(false)} aria-label="Close"><FiX /></button>
+            </div>
+            <div className="adm-modal-body">
+              <p style={{ marginTop: 0, color: 'var(--adm-text-2)', fontSize: '0.9rem' }}>
+                Customer ne bargain karke kam diya tha? Discount lagane se bill ka total aur due dono kam ho jayenge — ye udhaar nahi rahega.
+              </p>
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="disc-amount">Discount amount (due {inr(bill.amountDue)})</label>
+                <input id="disc-amount" className="adm-input" type="number" step="0.01" min="0.01" max={bill.amountDue} autoFocus
+                  value={disc.amount} onChange={e => setDisc(d => ({ ...d, amount: e.target.value }))} />
+              </div>
+              <div className="adm-field">
+                <label className="adm-label" htmlFor="disc-note">Note</label>
+                <input id="disc-note" className="adm-input" placeholder="Optional" value={disc.note} onChange={e => setDisc(d => ({ ...d, note: e.target.value }))} />
+              </div>
+              <div className="adm-row" style={{ marginTop: 10 }}>
+                <span className="text-muted">New total</span><b>{inr(Number(bill.total) - Number(disc.amount || 0))}</b>
+              </div>
+            </div>
+            <div className="adm-modal-foot">
+              <button type="button" className="adm-btn" onClick={() => setDiscOpen(false)}>Cancel</button>
+              <button type="submit" className="adm-btn primary" disabled={busy}>{busy ? 'Saving…' : 'Apply discount'}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {payOpen && (
         <div className="adm-modal-backdrop" onClick={() => setPayOpen(false)}>

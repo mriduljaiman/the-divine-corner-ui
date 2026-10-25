@@ -66,7 +66,7 @@ const Header = () => {
           </button>
 
           <Link href="/" className="app-logo-link">
-            <img src="/logo_tagline.png" alt="The Divine Corner" className="app-logo-img" />
+            <picture><source srcSet="/logo_tagline.webp" type="image/webp" /><img src="/logo_tagline.png" alt="The Divine Corner" className="app-logo-img" width={83} height={44} /></picture>
           </Link>
 
           <div className="app-header-icons">

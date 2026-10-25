@@ -4,15 +4,18 @@ export default function SplashScreen() {
   const [phase, setPhase] = useState('in');
 
   useEffect(() => {
-    if (sessionStorage.getItem('splash_shown')) {
+    // Only greet people who open the installed app, and keep it short: a website visit
+    // (or every new tab) must never be blocked by a splash.
+    const standalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (!standalone || sessionStorage.getItem('splash_shown')) {
       setPhase('done');
       return;
     }
     sessionStorage.setItem('splash_shown', '1');
 
-    const t1 = setTimeout(() => setPhase('visible'), 50);
-    const t2 = setTimeout(() => setPhase('out'), 2300);
-    const t3 = setTimeout(() => setPhase('done'), 2900);
+    const t1 = setTimeout(() => setPhase('visible'), 30);
+    const t2 = setTimeout(() => setPhase('out'), 900);
+    const t3 = setTimeout(() => setPhase('done'), 1300);
 
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
@@ -22,7 +25,7 @@ export default function SplashScreen() {
   return (
     <div className={`splash-screen splash-${phase}`}>
       <div className="splash-inner">
-        <img src="/logo.png" alt="The Divine Corner" className="splash-logo" />
+        <picture><source srcSet="/logo.webp" type="image/webp" /><img src="/logo.png" alt="The Divine Corner" className="splash-logo" width={300} height={300} /></picture>
 
         <p className="splash-tagline">
           Har Occassion Har Zarurat — Sirf The Divine Corner
