@@ -4,6 +4,7 @@ import ProductCard from '../../components/ProductCard';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
+import Seo from '../../components/Seo';
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -80,8 +81,15 @@ export default function ProductsPage() {
   const activeCategoryName = categories.find(c => String(c.id) === String(filters.categoryId))?.name;
   const hasActiveFilters = filters.categoryId || filters.minPrice || filters.maxPrice;
 
+  const activeCat = categories.find(c => c.id === filters.categoryId);
   return (
     <div className="products-app-page">
+      <Seo
+        title={activeCat ? `${activeCat.name} in Jaipur | The Divine Corner` : 'All Products | The Divine Corner, Jaipur'}
+        description={`Shop ${activeCat ? activeCat.name.toLowerCase() : 'gifts, pooja items, Laddu Gopal dresses, stationery, jewellery, toys and household items'} at The Divine Corner, Kanak Vrindavan, Jaipur. Cash on delivery.`}
+        path={filters.categoryId ? `/products?category=${filters.categoryId}` : '/products'}
+        noindex={!!filters.search}
+      />
       {/* Top Filter Bar */}
       <div className="top-filter-bar">
         <button

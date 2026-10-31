@@ -10,6 +10,7 @@ import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import TawkTo from '../components/TawkTo';
 import PWAInstallBanner from '../components/PWAInstallBanner';
+import LocalFooter from '../components/LocalFooter';
 
 const SplashScreen = dynamic(() => import('../components/SplashScreen'), { ssr: false });
 
@@ -26,6 +27,7 @@ function MyApp({ Component, pageProps }) {
       <Header />
       <main className="main-content">
         {page}
+        <LocalFooter />
       </main>
       <BottomNav />
     </>

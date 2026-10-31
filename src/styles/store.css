@@ -239,3 +239,43 @@
 .main-content:has(> .co-wrap) {
   padding-top: 0;
 }
+
+/* ---------- local SEO: /jaipur landing pages + site footer ---------- */
+.seo-page { max-width: var(--store-max); margin: 0 auto; padding: 0 16px 24px; }
+.seo-crumbs { font-size: 0.8rem; color: #64748b; padding: 12px 0 4px; }
+.seo-crumbs a { color: inherit; }
+.seo-hero { background: linear-gradient(135deg, #fff7ed, #fdf2f8); border-radius: var(--store-radius); padding: 24px 20px; margin: 8px 0 16px; }
+.seo-hero h1 { font-size: 1.5rem; line-height: 1.25; color: var(--store-maroon); margin: 6px 0 10px; }
+.seo-hero p { color: #334155; line-height: 1.6; margin: 0 0 8px; }
+.seo-emoji { font-size: 2rem; }
+.seo-cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.seo-cta .hero-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; color: #0f172a; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.seo-cta .hero-btn.primary { background: var(--store-saffron); border-color: var(--store-saffron); color: #fff; }
+.seo-block { margin: 20px 0; }
+.seo-block h2 { font-size: 1.15rem; margin: 0 0 10px; color: #0f172a; }
+.seo-block p { color: #334155; line-height: 1.6; }
+.seo-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0; }
+.seo-items li { background: #fff; border: 1px solid #f1f5f9; border-radius: 10px; padding: 10px 12px; font-size: 0.92rem; }
+.seo-items li::before { content: '✓ '; color: var(--store-saffron); font-weight: 700; }
+.seo-visit svg, .seo-addr svg { vertical-align: -2px; color: var(--store-saffron); }
+.seo-faq { background: #fff; border: 1px solid #f1f5f9; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+.seo-faq summary { cursor: pointer; font-weight: 600; }
+.seo-faq p { margin: 8px 0 0; }
+.seo-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.seo-links a { padding: 6px 12px; border-radius: 999px; background: #fff; border: 1px solid #e2e8f0; font-size: 0.85rem; color: #0f172a; text-decoration: none; }
+.seo-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 640px) { .seo-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } .seo-hero h1 { font-size: 2rem; } }
+.seo-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 10px; background: #fff; border: 1px solid #f1f5f9; border-radius: var(--store-radius); text-align: center; color: #0f172a; text-decoration: none; }
+.seo-tile span { font-size: 1.8rem; }
+
+.local-footer { margin-top: 32px; border-top: 1px solid #e2e8f0; background: #fffaf5; padding: 20px 16px 8px; font-size: 0.85rem; color: #475569; }
+.local-footer-inner { max-width: var(--store-max); margin: 0 auto; display: grid; gap: 16px; }
+@media (min-width: 768px) { .local-footer-inner { grid-template-columns: 1fr 2fr; } }
+.local-footer p { margin: 4px 0; }
+.local-footer svg { vertical-align: -2px; }
+.local-footer a { color: inherit; }
+.local-footer-name { color: var(--store-maroon); font-size: 1rem; }
+.local-footer-links { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; }
+.local-footer-links a { text-decoration: none; }
+.local-footer-links a:hover { color: var(--store-saffron); }
+.local-footer-copy { max-width: var(--store-max); margin: 14px auto 0 !important; font-size: 0.75rem; color: #94a3b8; }

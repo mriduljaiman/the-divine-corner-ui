@@ -1,8 +1,9 @@
 import { Html, Head, Main, NextScript } from 'next/document';
+import { localBusinessSchema } from '../config/shop';
 
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="en-IN">
       <Head>
         {/* PWA Meta Tags */}
         <link rel="manifest" href="/manifest.json" />
@@ -12,7 +13,8 @@ export default function Document() {
         <meta name="apple-mobile-web-app-title" content="Divine Corner" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#3d1a6e" />
-        <meta name="description" content="The Divine Corner - Har Occasion Har Zarurat, Sirf The Divine Corner. 100% Genuine Products." />
+        <meta name="geo.region" content="IN-RJ" />
+        <meta name="geo.placename" content="Jaipur" />
 
         {/* Apple Touch Icons */}
         <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
@@ -32,11 +34,11 @@ export default function Document() {
         <meta name="msapplication-config" content="/browserconfig.xml" />
 
         {/* Open Graph / Social */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="The Divine Corner" />
-        <meta property="og:description" content="Har Occasion Har Zarurat, Sirf The Divine Corner. 100% Genuine Products." />
-        <meta property="og:image" content="/logo_tagline.png" />
+        {/* per-page title/description/og tags come from components/Seo */}
         <meta property="og:site_name" content="The Divine Corner" />
+
+        {/* Local business schema on every page – what Google uses for "near me" results */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema()) }} />
 
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://res.cloudinary.com" />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Head from 'next/head';
+import Seo from '../components/Seo';
 import { FiTruck, FiShield, FiHeadphones, FiArrowRight } from 'react-icons/fi';
 import { MdCurrencyRupee } from 'react-icons/md';
 import ProductCard from '../components/ProductCard';
@@ -50,10 +50,11 @@ export default function Home() {
 
   return (
     <div className="home-app">
-      <Head>
-        <title>The Divine Corner — Divine gifts &amp; décor</title>
-        <meta name="description" content="Handpicked idols, puja essentials, décor and gifts. Cash on delivery, free delivery on orders above ₹500." />
-      </Head>
+      <Seo
+        title="The Divine Corner, Jaipur | Gift Shop, Pooja Samagri, Laddu Gopal Dress & Stationery"
+        description="Gift shop in Kanak Vrindavan, Jaipur: customized gifts, pooja samagri, Laddu Gopal dresses, bangles, jewellery, stationery, soft toys, RC cars, photo frames, passport size photos & birthday decoration. Cash on delivery."
+        path="/"
+      />
 
       {/* Hero */}
       <section className="hero">

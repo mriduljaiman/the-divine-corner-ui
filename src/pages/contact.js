@@ -1,5 +1,7 @@
 // ============ pages/contact.js ============
 import { useState } from 'react';
+import Seo from '../components/Seo';
+import { SHOP, shopAddressText, hoursText } from '../config/shop';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -26,6 +28,8 @@ export default function ContactPage() {
 
   return (
     <div className="contact-page">
+      <Seo title={`Contact & Shop Address – ${SHOP.name}, Kanak Vrindavan, Jaipur`}
+        description={`Visit ${SHOP.name} at ${shopAddressText()}. Gifts, pooja samagri, Laddu Gopal dresses, stationery and more.`} />
       <div className="container">
         <h1>Contact Us</h1>
 
@@ -94,20 +98,29 @@ export default function ContactPage() {
             <div className="contact-info">
               <div className="info-item">
                 <h3>📍 Address</h3>
-                <p>Kanak Vrindavan<br />Jaipur, Rajasthan</p>
+                <p>{SHOP.name}<br />{shopAddressText()}</p>
+                {SHOP.mapsUrl && <p><a href={SHOP.mapsUrl} target="_blank" rel="noopener noreferrer">Get directions on Google Maps →</a></p>}
               </div>
+
+              {SHOP.phone && (
+                <div className="info-item">
+                  <h3>📞 Phone</h3>
+                  <p><a href={`tel:${SHOP.phone.replace(/\s/g, '')}`}>{SHOP.phone}</a></p>
+                  {SHOP.whatsapp && <p><a href={`https://wa.me/${SHOP.whatsapp}`} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>}
+                </div>
+              )}
 
               <div className="info-item">
                 <h3>📧 Email</h3>
-                <p>thedivinecorner.seva@gmail.com</p>
+                <p><a href={`mailto:${SHOP.email}`}>{SHOP.email}</a></p>
               </div>
 
-              <div className="info-item">
-                <h3>🕐 Business Hours</h3>
-                <p>Monday - Friday: 9:00 AM - 6:00 PM<br />
-                Saturday: 10:00 AM - 4:00 PM<br />
-                Sunday: Closed</p>
-              </div>
+              {SHOP.hours.length > 0 && (
+                <div className="info-item">
+                  <h3>🕐 Shop Timings</h3>
+                  <p>{hoursText().map(line => <span key={line}>{line}<br /></span>)}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

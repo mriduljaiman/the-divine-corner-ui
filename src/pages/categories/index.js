@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { categoryService } from '../../services/categoryService';
+import Seo from '../../components/Seo';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -15,6 +16,8 @@ export default function CategoriesPage() {
 
   return (
     <div className="categories-app-page">
+      <Seo title="Shop by Category | The Divine Corner, Jaipur"
+        description="Browse gifts, customized gifts, Laddu Gopal dresses, idols, jewellery, stationery, books and kitchen items at The Divine Corner, Kanak Vrindavan, Jaipur." />
       <h1 className="categories-page-title">Categories</h1>
 
       {loading ? (

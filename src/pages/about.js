@@ -1,6 +1,12 @@
+import Link from 'next/link';
+import Seo from '../components/Seo';
+import { SEO_PAGES } from '../config/seoPages';
+
 export default function AboutPage() {
   return (
     <div className="about-page">
+      <Seo title="About The Divine Corner – Gift & Pooja Shop in Kanak Vrindavan, Jaipur"
+        description="The Divine Corner is a local shop in Kanak Vrindavan, Jaipur for gifts, customized gifts, pooja samagri, Laddu Gopal dresses, bangles, jewellery, stationery, toys and household items." />
       <div className="container">
         <h1>About The Divine Corner</h1>
 
@@ -11,6 +17,12 @@ export default function AboutPage() {
             unique products. Based in Kanak Vrindavan, Jaipur, we bring you a handpicked selection
             of gifts perfect for every occasion, from birthdays and anniversaries to festivals like
             Diwali and Holi.
+          </p>
+          <p>
+            Our shop also keeps:{' '}
+            {SEO_PAGES.map((p, i) => (
+              <span key={p.slug}>{i > 0 && ', '}<Link href={`/jaipur/${p.slug}`}>{p.label}</Link></span>
+            ))}.
           </p>
         </section>
 

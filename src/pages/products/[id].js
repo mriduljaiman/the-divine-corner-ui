@@ -6,19 +6,22 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toast';
 import { cloudinaryPad } from '../../utils/cloudinary';
+import Seo from '../../components/Seo';
+import { SHOP } from '../../config/shop';
+import { serverGet, publicProduct } from '../../utils/serverApi';
 import {
   FiShoppingCart, FiArrowLeft, FiStar, FiPackage,
   FiTag, FiLoader, FiImage, FiCheck, FiMinus, FiPlus
 } from 'react-icons/fi';
 
-export default function ProductDetail() {
+export default function ProductDetail({ initialProduct }) {
   const router = useRouter();
   const { id } = router.query;
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
 
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [product, setProduct] = useState(initialProduct);
+  const [loading, setLoading] = useState(!initialProduct);
   const [adding, setAdding] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
@@ -26,8 +29,10 @@ export default function ProductDetail() {
   const [imageError, setImageError] = useState({});
 
   useEffect(() => {
-    if (id) fetchProduct(id);
-  }, [id]);
+    // server already rendered this product (SEO); refetch only on client-side id changes
+    if (id && id !== initialProduct?.id) fetchProduct(id);
+    else if (initialProduct) setProduct(initialProduct);
+  }, [id, initialProduct]);
 
   const fetchProduct = async (productId) => {
     try {
@@ -118,6 +123,7 @@ export default function ProductDetail() {
 
   return (
     <div className="pd-page">
+      <ProductSeo product={product} images={images} price={displayPrice} inStock={inStock} />
       <div className="container">
         {/* Breadcrumb */}
         <nav className="pd-breadcrumb">
@@ -620,4 +626,45 @@ export default function ProductDetail() {
       `}</style>
     </div>
   );
+}
+
+function ProductSeo({ product, images, price, inStock }) {
+  const desc = (product.description || '').replace(/\s+/g, ' ').trim();
+  const where = `${SHOP.name}, Kanak Vrindavan, Jaipur`;
+  const description = `${product.name}${product.category?.name ? ` – ${product.category.name}` : ''} at ₹${Number(price).toLocaleString('en-IN')}. ${desc ? `${desc.slice(0, 90)}. ` : ''}Buy online with cash on delivery or visit ${where}.`;
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: images,
+    description: desc || product.name,
+    sku: product.sku || undefined,
+    brand: { '@type': 'Brand', name: product.brand || SHOP.name },
+    category: product.category?.name,
+    offers: {
+      '@type': 'Offer',
+      url: `${SHOP.url}/products/${product.id}`,
+      priceCurrency: 'INR',
+      price: Number(price),
+      availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
+      seller: { '@id': `${SHOP.url}/#store` },
+    },
+  };
+  return (
+    <Seo title={`${product.name} | Buy in Jaipur – ${SHOP.name}`} description={description}
+      image={images[0]} path={`/products/${product.id}`} type="product" jsonLd={[schema]} />
+  );
+}
+
+export async function getStaticPaths() {
+  // pages are built on first visit and then cached (ISR)
+  return { paths: [], fallback: 'blocking' };
+}
+
+export async function getStaticProps({ params }) {
+  const r = await serverGet(`/products/${params.id}`);
+  if (r.status === 404 || r.status === 400 || (r.ok && r.data?.active === false)) return { notFound: true, revalidate: 300 };
+  // backend unreachable: still render, the client fetches as before
+  return { props: { initialProduct: r.ok ? publicProduct(r.data) : null }, revalidate: r.ok ? 600 : 30 };
 }
