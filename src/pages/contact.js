@@ -124,6 +124,18 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
+
+        {/* Google suggests a map on the site so visitors (and Google) tie it to the shop listing */}
+        <div className="contact-map">
+          <iframe
+            title={`${SHOP.name} on Google Maps`}
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(`${SHOP.name}, ${shopAddressText()}`)}&z=16&output=embed`}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
+          {SHOP.mapsUrl && <a href={SHOP.mapsUrl} target="_blank" rel="noopener noreferrer">Get directions →</a>}
+        </div>
       </div>
     </div>
   );
