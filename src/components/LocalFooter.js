@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FiMapPin, FiPhone, FiMail, FiClock } from 'react-icons/fi';
-import { SEO_PAGES } from '../config/seoPages';
+import { SHOP_PAGES, FESTIVAL_PAGES } from '../config/seoPages';
 import { SHOP, shopAddressText, hoursText } from '../config/shop';
 
 // Shown under every storefront page: the shop's address (same text as Google Business
@@ -20,12 +20,17 @@ export default function LocalFooter() {
         <nav aria-label="Shop by need">
           <b>Shop in Jaipur</b>
           <div className="local-footer-links">
-            {SEO_PAGES.map(p => <Link key={p.slug} href={`/jaipur/${p.slug}`}>{p.label}</Link>)}
+            {SHOP_PAGES.map(p => <Link key={p.slug} href={`/jaipur/${p.slug}`}>{p.label}</Link>)}
+            <Link href="/jaipur/laddu-gopal-dress-size-chart">Laddu Gopal Size Chart</Link>
+          </div>
+          <b className="local-footer-sub">Festivals</b>
+          <div className="local-footer-links">
+            {FESTIVAL_PAGES.map(p => <Link key={p.slug} href={`/jaipur/${p.slug}`}>{p.label}</Link>)}
           </div>
         </nav>
       </div>
       <p className="local-footer-copy">
-        © {new Date().getFullYear()} {SHOP.name} · <Link href="/about">About</Link> · <Link href="/contact">Contact</Link>
+        © {new Date().getFullYear()} {SHOP.name} · <Link href="/about">About</Link> · <Link href="/contact">Contact</Link> · <Link href="/shipping-policy">Shipping</Link> · <Link href="/return-policy">Returns</Link>
       </p>
     </footer>
   );

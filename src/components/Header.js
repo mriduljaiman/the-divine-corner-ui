@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { categoryService } from '../services/categoryService';
+import { categoryPath } from '../utils/urls';
 import {
   FiMenu, FiX, FiShoppingCart, FiUser, FiLogOut,
   FiSettings, FiSearch, FiChevronRight, FiMessageCircle,
@@ -178,7 +179,7 @@ const Header = () => {
           <div className="drawer-categories">
             <p className="drawer-section-title">Shop by Category</p>
             {categories.map(cat => (
-              <Link key={cat.id} href={`/products?category=${cat.id}`} className="drawer-nav-link">
+              <Link key={cat.id} href={categoryPath(cat)} className="drawer-nav-link">
                 <span>
                   {cat.icon && <span className="drawer-cat-icon">{cat.icon}</span>}
                   {cat.name}

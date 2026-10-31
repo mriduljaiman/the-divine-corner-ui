@@ -13,6 +13,7 @@ import { addProductToDraft, loadDraft } from '../../utils/pos';
 import { inr } from '../../utils/format';
 import { cloudinaryPad } from '../../utils/cloudinary';
 import { showToast } from '../../utils/toast';
+import { productPath } from '../../utils/urls';
 
 export default function ScanLanding() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function ScanLanding() {
           setInBill(loadDraft().lines.find(l => l.productId === data.id)?.qty || 0);
           setState('admin');
         } else {
-          router.replace(`/products/${data.id}`);
+          router.replace(productPath(data));
         }
       })
       .catch(() => alive && setState('notfound'));
@@ -116,7 +117,7 @@ export default function ScanLanding() {
         </button>
         <div className="scan-links">
           <Link href={`/admin/products/${product.id}`}><FiEdit2 /> Edit product</Link>
-          <Link href={`/products/${product.id}`}><FiExternalLink /> Store page</Link>
+          <Link href={productPath(product)}><FiExternalLink /> Store page</Link>
         </div>
       </div>
       <style jsx>{styles}</style>

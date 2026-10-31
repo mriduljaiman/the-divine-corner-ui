@@ -5,6 +5,7 @@ import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { FiFilter, FiChevronDown, FiX } from 'react-icons/fi';
 import Seo from '../../components/Seo';
+import { categoryPath } from '../../utils/urls';
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -87,7 +88,7 @@ export default function ProductsPage() {
       <Seo
         title={activeCat ? `${activeCat.name} in Jaipur | The Divine Corner` : 'All Products | The Divine Corner, Jaipur'}
         description={`Shop ${activeCat ? activeCat.name.toLowerCase() : 'gifts, pooja items, Laddu Gopal dresses, stationery, jewellery, toys and household items'} at The Divine Corner, Kanak Vrindavan, Jaipur. Cash on delivery.`}
-        path={filters.categoryId ? `/products?category=${filters.categoryId}` : '/products'}
+        path={activeCat ? categoryPath(activeCat) : '/products'}
         noindex={!!filters.search}
       />
       {/* Top Filter Bar */}

@@ -6,12 +6,13 @@ import ProductCard from '../../components/ProductCard';
 import { SEO_PAGES, seoPageBySlug } from '../../config/seoPages';
 import { SHOP, shopAddressText } from '../../config/shop';
 import { serverGet, publicProduct } from '../../utils/serverApi';
+import { productPath, categoryPath } from '../../utils/urls';
 
 const MAX_PRODUCTS = 20;
 
-export default function LocalLandingPage({ page, products, categoryId }) {
+export default function LocalLandingPage({ page, products, category }) {
   const url = `${SHOP.url}/jaipur/${page.slug}`;
-  const shopAllHref = categoryId ? `/products?category=${categoryId}` : '/products';
+  const shopAllHref = category ? categoryPath(category) : '/products';
 
   const breadcrumb = {
     '@context': 'https://schema.org',
@@ -30,7 +31,7 @@ export default function LocalLandingPage({ page, products, categoryId }) {
   const itemList = products.length > 0 && {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    itemListElement: products.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${SHOP.url}/products/${p.id}`, name: p.name })),
+    itemListElement: products.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${SHOP.url}${productPath(p)}`, name: p.name })),
   };
 
   return (
@@ -45,6 +46,7 @@ export default function LocalLandingPage({ page, products, categoryId }) {
       <header className="seo-hero">
         <span className="seo-emoji" aria-hidden="true">{page.emoji}</span>
         <h1>{page.h1}</h1>
+        {page.hi && <p className="seo-hi" lang="hi"><b>{page.hi.h1}</b><br />{page.hi.text}</p>}
         <p>{page.intro}</p>
         <div className="seo-cta">
           {SHOP.mapsUrl && <a className="hero-btn primary" href={SHOP.mapsUrl} target="_blank" rel="noopener noreferrer"><FiMapPin /> Get directions</a>}
@@ -53,6 +55,10 @@ export default function LocalLandingPage({ page, products, categoryId }) {
           <Link className="hero-btn" href={shopAllHref}>Shop online <FiArrowRight /></Link>
         </div>
       </header>
+
+      {page.slug === 'laddu-gopal-dress' && (
+        <p className="seo-block"><Link href="/jaipur/laddu-gopal-dress-size-chart">📏 Which size? See the Laddu Gopal dress size chart →</Link></p>
+      )}
 
       <section className="seo-block">
         <h2>What you will find</h2>
@@ -116,7 +122,8 @@ export async function getStaticProps({ params }) {
 
   const cats = catNames.length ? (await serverGet('/categories')).data || [] : [];
   const wanted = catNames.map(n => n.toLowerCase());
-  const catIds = cats.filter(c => wanted.includes(c.name.toLowerCase())).map(c => c.id);
+  const matched = cats.filter(c => wanted.includes(c.name.toLowerCase()));
+  const catIds = matched.map(c => c.id);
 
   const requests = [
     ...catIds.map(id => serverGet(`/products/search?categoryId=${id}&size=${MAX_PRODUCTS}`)),
@@ -133,7 +140,7 @@ export async function getStaticProps({ params }) {
   }
 
   return {
-    props: { page, products: products.slice(0, MAX_PRODUCTS), categoryId: catIds.length === 1 ? catIds[0] : null },
+    props: { page, products: products.slice(0, MAX_PRODUCTS), category: matched.length >= 1 ? { name: matched[0].name } : null },
     revalidate: 3600, // new stock shows up within an hour
   };
 }

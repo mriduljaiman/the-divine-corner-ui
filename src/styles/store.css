@@ -279,3 +279,11 @@
 .local-footer-links a { text-decoration: none; }
 .local-footer-links a:hover { color: var(--store-saffron); }
 .local-footer-copy { max-width: var(--store-max); margin: 14px auto 0 !important; font-size: 0.75rem; color: #94a3b8; }
+.seo-hi { font-size: 0.95rem; color: #7c2d12 !important; }
+.local-footer-sub { display: block; margin-top: 12px; }
+.home-needs { padding: 0 var(--store-gutter) 8px; max-width: var(--store-max); margin: 0 auto; }
+.seo-table-wrap { overflow-x: auto; }
+.seo-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; font-size: 0.92rem; }
+.seo-table th, .seo-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; text-align: left; white-space: nowrap; }
+.seo-table th { background: #fff7ed; color: var(--store-maroon); }
+.seo-steps { padding-left: 20px; line-height: 1.7; color: #334155; }

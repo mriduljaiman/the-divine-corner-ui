@@ -179,7 +179,7 @@ export default function NewProduct() {
                 value={formData.description}
                 onChange={handleChange}
                 rows="4"
-                placeholder="Enter product description"
+                placeholder="e.g. Brass diya for daily puja, 3 inch, pack of 2. Good for Diwali gifting. (Helps Google search)"
               />
             </div>
 

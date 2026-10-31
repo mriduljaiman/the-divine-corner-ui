@@ -6,6 +6,9 @@ import { MdCurrencyRupee } from 'react-icons/md';
 import ProductCard from '../components/ProductCard';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
+import { categoryPath } from '../utils/urls';
+import { serverGet, publicProduct } from '../utils/serverApi';
+import { SHOP_PAGES, FESTIVAL_PAGES } from '../config/seoPages';
 
 const TRUST = [
   { icon: MdCurrencyRupee, title: 'Cash on Delivery', text: 'Pay when it arrives' },
@@ -28,13 +31,14 @@ function Skeletons({ n = 10 }) {
   );
 }
 
-export default function Home() {
-  const [products, setProducts] = useState([]);
-  const [featured, setFeatured] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Home({ initial }) {
+  const [products, setProducts] = useState(initial?.products || []);
+  const [featured, setFeatured] = useState(initial?.featured || []);
+  const [categories, setCategories] = useState(initial?.categories || []);
+  const [loading, setLoading] = useState(!initial);
 
   useEffect(() => {
+    if (initial) return; // server-rendered (ISR) – Google and the visitor already have the data
     // Each request fails independently so one slow/broken call never blanks the page
     Promise.allSettled([
       productService.getAllProducts(0, 20),
@@ -46,7 +50,7 @@ export default function Home() {
       if (cats.status === 'fulfilled') setCategories(cats.value.data || []);
       setLoading(false);
     });
-  }, []);
+  }, [initial]);
 
   return (
     <div className="home-app">
@@ -98,7 +102,7 @@ export default function Home() {
               <span className="cat-chip-label">All</span>
             </Link>
             {categories.map(cat => (
-              <Link key={cat.id} href={`/products?category=${cat.id}`} className="cat-chip">
+              <Link key={cat.id} href={categoryPath(cat)} className="cat-chip">
                 <div className="cat-chip-img-wrap">
                   {cat.imageUrl
                     ? <img src={cat.imageUrl} alt={cat.name} className="cat-chip-img" />
@@ -110,6 +114,23 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Shop by need – internal links to the local landing pages */}
+      <section className="store-section">
+        <div className="store-section-head">
+          <div>
+            <h2>Shop by need</h2>
+            <p>Har zarurat ka saaman — Kanak Vrindavan, Sirsi Road</p>
+          </div>
+          <Link href="/jaipur">All</Link>
+        </div>
+        <div className="seo-links home-needs">
+          {SHOP_PAGES.map(p => <Link key={p.slug} href={`/jaipur/${p.slug}`}>{p.emoji} {p.label}</Link>)}
+        </div>
+        <div className="seo-links home-needs">
+          {FESTIVAL_PAGES.map(p => <Link key={p.slug} href={`/jaipur/${p.slug}`}>{p.emoji} {p.label}</Link>)}
+        </div>
+      </section>
 
       {/* Featured */}
       {(loading || featured.length > 0) && (
@@ -229,4 +250,23 @@ export default function Home() {
       `}</style>
     </div>
   );
+}
+
+export async function getStaticProps() {
+  const [all, feat, cats] = await Promise.all([
+    serverGet('/products?page=0&size=20&sortBy=createdAt&sortDir=DESC'),
+    serverGet('/products/featured'),
+    serverGet('/categories'),
+  ]);
+  const ok = all.ok && feat.ok && cats.ok;
+  return {
+    props: {
+      initial: ok ? {
+        products: (all.data.content || []).map(publicProduct),
+        featured: (feat.data || []).slice(0, 10).map(publicProduct),
+        categories: cats.data || [],
+      } : null,
+    },
+    revalidate: ok ? 300 : 30,
+  };
 }

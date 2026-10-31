@@ -113,6 +113,10 @@ export default function AdminProducts() {
                           <div className="adm-card-sub">{p.sku}{p.barcode ? ` · ${p.barcode}` : ''}</div>
                         </div>
                         {p.featured && <span className="adm-badge pending">Featured</span>}
+                        {/* Google needs words to rank a product page – nudge the owner to write a few lines */}
+                        {(p.description || '').trim().length < 40 && (
+                          <span className="adm-badge danger" title="Add 1–2 lines: what it is, size/material, use. Helps Google search.">No description</span>
+                        )}
                       </div>
                     </td>
                     <td>{p.category?.name || '—'}</td>

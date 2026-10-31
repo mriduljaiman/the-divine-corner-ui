@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { cloudinaryPad } from '../utils/cloudinary';
 import { inr } from '../utils/format';
 import { showToast } from '../utils/toast';
+import { productPath } from '../utils/urls';
 
 const FREE_SHIPPING_AT = 500;
 
@@ -102,11 +103,11 @@ export default function CartPage() {
                     : item.quantity > p.stockQuantity ? `Only ${p.stockQuantity} left in stock` : '';
                 return (
                   <div key={item.id} className={`cart-item ${busyId === item.id ? 'busy' : ''}`}>
-                    <Link href={`/products/${p.id}`} className="ci-img">
+                    <Link href={productPath(p)} className="ci-img">
                       {p.images?.[0] ? <img src={cloudinaryPad(p.images[0], 200, 260)} alt={p.name} /> : <span className="ci-ph">ॐ</span>}
                     </Link>
                     <div className="ci-body">
-                      <Link href={`/products/${p.id}`} className="ci-name">{p.name}</Link>
+                      <Link href={productPath(p)} className="ci-name">{p.name}</Link>
                       {item.size && <div className="ci-meta">Size: <b>{item.size}</b></div>}
                       <div className="ci-price">
                         <b>{inr(unit)}</b>

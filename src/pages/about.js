@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Seo from '../components/Seo';
-import { SEO_PAGES } from '../config/seoPages';
+import { SHOP_PAGES as SEO_PAGES } from '../config/seoPages';
 
 export default function AboutPage() {
   return (

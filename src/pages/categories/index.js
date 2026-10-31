@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { categoryService } from '../../services/categoryService';
 import Seo from '../../components/Seo';
+import { categoryPath } from '../../utils/urls';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -34,7 +35,7 @@ export default function CategoriesPage() {
           {categories.map(cat => (
             <Link
               key={cat.id}
-              href={`/products?category=${cat.id}`}
+              href={categoryPath(cat)}
               className="categories-app-card"
             >
               <div className="categories-app-img-wrap">

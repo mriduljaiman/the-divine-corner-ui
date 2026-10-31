@@ -8,7 +8,9 @@ import { showToast } from '../../utils/toast';
 import { cloudinaryPad } from '../../utils/cloudinary';
 import Seo from '../../components/Seo';
 import { SHOP } from '../../config/shop';
+import { RETURN_POLICY, SHIPPING } from '../../config/policy';
 import { serverGet, publicProduct } from '../../utils/serverApi';
+import { productPath, productIdFromParam, categoryPath } from '../../utils/urls';
 import {
   FiShoppingCart, FiArrowLeft, FiStar, FiPackage,
   FiTag, FiLoader, FiImage, FiCheck, FiMinus, FiPlus
@@ -16,7 +18,7 @@ import {
 
 export default function ProductDetail({ initialProduct }) {
   const router = useRouter();
-  const { id } = router.query;
+  const id = router.query.id && productIdFromParam(router.query.id);
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
 
@@ -60,7 +62,7 @@ export default function ProductDetail({ initialProduct }) {
       setQuantity(1);
       setSelectedSize('');
       setImageError({});
-      router.replace(`/products/${variantId}`, undefined, { shallow: true });
+      router.replace(productPath(res.data), undefined, { shallow: true });
     } catch {
       router.push(`/products/${variantId}`);
     }
@@ -133,7 +135,7 @@ export default function ProductDetail({ initialProduct }) {
           {product.category?.name && (
             <>
               <span>/</span>
-              <Link href={`/products?category=${product.category.id}`}>{product.category.name}</Link>
+              <Link href={categoryPath(product.category)}>{product.category.name}</Link>
             </>
           )}
           <span>/</span>
@@ -189,7 +191,7 @@ export default function ProductDetail({ initialProduct }) {
           {/* Product Info */}
           <div className="pd-info">
             {product.category?.name && (
-              <Link href={`/products?category=${product.category.id}`} className="pd-category">
+              <Link href={categoryPath(product.category)} className="pd-category">
                 {product.category.name}
               </Link>
             )}
@@ -643,17 +645,31 @@ function ProductSeo({ product, images, price, inStock }) {
     category: product.category?.name,
     offers: {
       '@type': 'Offer',
-      url: `${SHOP.url}/products/${product.id}`,
+      url: `${SHOP.url}${productPath(product)}`,
       priceCurrency: 'INR',
       price: Number(price),
       availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
       seller: { '@id': `${SHOP.url}/#store` },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: { '@type': 'MonetaryAmount', value: Number(price) >= SHIPPING.freeAbove ? 0 : SHIPPING.charge, currency: 'INR' },
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'IN',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: RETURN_POLICY.days,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn',
+        merchantReturnLink: `${SHOP.url}/return-policy`,
+      },
     },
   };
   return (
     <Seo title={`${product.name} | Buy in Jaipur – ${SHOP.name}`} description={description}
-      image={images[0]} path={`/products/${product.id}`} type="product" jsonLd={[schema]} />
+      image={images[0]} path={productPath(product)} type="product" jsonLd={[schema]} />
   );
 }
 
@@ -663,8 +679,12 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const r = await serverGet(`/products/${params.id}`);
+  const r = await serverGet(`/products/${productIdFromParam(params.id)}`);
   if (r.status === 404 || r.status === 400 || (r.ok && r.data?.active === false)) return { notFound: true, revalidate: 300 };
+  // old /products/<uuid> links (and renamed products) move to the keyword URL
+  if (r.ok && `/products/${params.id}` !== productPath(r.data)) {
+    return { redirect: { destination: productPath(r.data), permanent: true }, revalidate: 600 };
+  }
   // backend unreachable: still render, the client fetches as before
   return { props: { initialProduct: r.ok ? publicProduct(r.data) : null }, revalidate: r.ok ? 600 : 30 };
 }

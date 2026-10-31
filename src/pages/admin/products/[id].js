@@ -195,7 +195,7 @@ export default function EditProduct() {
 
             <div className="form-group">
               <label>Description</label>
-              <textarea name="description" value={formData.description} onChange={handleChange} rows="4" placeholder="Enter product description" />
+              <textarea name="description" value={formData.description} onChange={handleChange} rows="4" placeholder="e.g. Brass diya for daily puja, 3 inch, pack of 2. Good for Diwali gifting. (Helps Google search)" />
             </div>
 
             <div className="form-group">

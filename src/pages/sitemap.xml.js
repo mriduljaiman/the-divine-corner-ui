@@ -1,8 +1,9 @@
 import { SEO_PAGES } from '../config/seoPages';
 import { SHOP } from '../config/shop';
 import { serverGet } from '../utils/serverApi';
+import { productPath, categoryPath } from '../utils/urls';
 
-const STATIC_PATHS = ['/', '/jaipur', '/products', '/categories', '/about', '/contact'];
+const STATIC_PATHS = ['/', '/jaipur', '/jaipur/laddu-gopal-dress-size-chart', '/products', '/categories', '/about', '/contact', '/shipping-policy', '/return-policy'];
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -15,8 +16,8 @@ export async function getServerSideProps({ res }) {
   const urls = [
     ...STATIC_PATHS.map(p => ({ loc: p, priority: p === '/' ? '1.0' : '0.8' })),
     ...SEO_PAGES.map(p => ({ loc: `/jaipur/${p.slug}`, priority: '0.9' })),
-    ...(categories.data || []).map(c => ({ loc: `/products?category=${c.id}`, priority: '0.6' })),
-    ...(products.data?.content || []).filter(p => p.active !== false).map(p => ({ loc: `/products/${p.id}`, priority: '0.7' })),
+    ...(categories.data || []).map(c => ({ loc: categoryPath(c), priority: '0.8' })),
+    ...(products.data?.content || []).filter(p => p.active !== false).map(p => ({ loc: productPath(p), priority: '0.7' })),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

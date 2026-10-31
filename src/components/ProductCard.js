@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { showToast } from '../utils/toast';
 import { FiHeart, FiLoader } from 'react-icons/fi';
 import { cloudinaryPad } from '../utils/cloudinary';
+import { productPath } from '../utils/urls';
 
 const ProductCard = ({ product }) => {
   const router = useRouter();
@@ -22,7 +23,7 @@ const ProductCard = ({ product }) => {
     }
     // Size has to be picked on the product page
     if (product.sizes && product.sizes.length > 0) {
-      router.push(`/products/${product.id}`);
+      router.push(productPath(product));
       return;
     }
     try {
@@ -48,7 +49,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="meesho-card">
-      <Link href={`/products/${product.id}`} className="meesho-card-link">
+      <Link href={productPath(product)} className="meesho-card-link">
         {/* Image */}
         <div className="meesho-img-wrap">
           {imageUrl && !imageError ? (
