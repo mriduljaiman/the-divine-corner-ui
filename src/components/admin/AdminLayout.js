@@ -10,6 +10,7 @@ import {
 import { MdCurrencyRupee } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { useDueReminders } from '../../utils/dues';
+import { preloadDetector } from '../../utils/barcodeReader';
 
 export const ADMIN_NAV = [
   { title: 'Overview', items: [{ href: '/admin/dashboard', label: 'Dashboard', icon: FiGrid }] },
@@ -65,6 +66,11 @@ export default function AdminLayout({ title, children }) {
   const ready = !loading && isAdmin();
   const pathname = router.pathname;
   const remindCount = useDueReminders(ready, router.asPath);
+
+  // get the barcode decoder ready in the background so "Scan" opens instantly
+  useEffect(() => {
+    if (ready) preloadDetector();
+  }, [ready]);
 
   return (
     <div className={`adm-shell ${drawerOpen ? 'drawer-open' : ''}`}>

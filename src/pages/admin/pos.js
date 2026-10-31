@@ -1,6 +1,5 @@
 // ============ pages/admin/pos.js — counter billing ============
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -9,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import { adminLayout } from '../../components/admin/AdminLayout';
 import BillShare from '../../components/admin/BillShare';
+import Scanner from '../../components/admin/Scanner';
 import { adminService } from '../../services/adminService';
 import { showToast } from '../../utils/toast';
 import { inr, normalizePhone, apiError, todayIso } from '../../utils/format';
@@ -16,7 +16,7 @@ import { invalidateDues } from '../../utils/dues';
 import { extractCode, addToLines, billTotals, loadDraft, saveDraft, clearDraft, beep } from '../../utils/pos';
 import { cloudinaryPad } from '../../utils/cloudinary';
 
-const Scanner = dynamic(() => import('../../components/admin/Scanner'), { ssr: false });
+
 const METHODS = [['CASH', 'Cash'], ['UPI', 'UPI'], ['CARD', 'Card']];
 
 export default function PosPage() {
@@ -277,7 +277,7 @@ export default function PosPage() {
             <div style={{ marginTop: 12 }}>
               <Scanner onScan={addByCode} />
               <p className="adm-hint" style={{ marginTop: 6, textAlign: 'center' }}>
-                Point at the label&apos;s QR / barcode — each scan adds 1 qty.
+                Point the camera at the label&apos;s barcode — each scan adds 1 qty.
               </p>
             </div>
           )}

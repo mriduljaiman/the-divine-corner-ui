@@ -3,6 +3,8 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // the admin-only barcode decoder (1MB wasm) must not be precached on every visitor's phone
+  publicExcludes: ['!noprecache/**/*', '!zxing/**/*'],
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
