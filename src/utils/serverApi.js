@@ -1,6 +1,15 @@
+import { SHOP } from '../config/shop';
+
 // Server-side (getStaticProps / sitemap) fetch against the backend. Never throws:
 // SEO pages must still render their copy when the backend is slow or down.
-const API = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api').replace(/\/$/, '');
+// On Vercel NEXT_PUBLIC_API_URL is relative ('/backend'), which only works in the
+// browser, so fall back to the site's own /backend rewrite in production.
+const absolute = (u) => (u && /^https?:\/\//.test(u) ? u : null);
+const API = (
+  absolute(process.env.BACKEND_URL)
+  || absolute(process.env.NEXT_PUBLIC_API_URL)
+  || (process.env.NODE_ENV === 'production' ? `${SHOP.url}/backend` : 'http://localhost:8080/api')
+).replace(/\/$/, '');
 
 export async function serverGet(path, { timeoutMs = 8000 } = {}) {
   const ctrl = new AbortController();
